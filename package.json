@@ -1,0 +1,25 @@
+{
+  "name": "unisonht-epson-network-rs232-projector",
+  "version": "1.0.0",
+  "description": "UnisonHT Plugin for Epson Networked RS232 Projector",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joeferner/unisonht-epson-network-rs232-projector.git"
+  },
+  "keywords": [
+    "unisonht",
+    "tivo"
+  ],
+  "author": "Joe Ferner <joe@fernsroth.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/joeferner/unisonht-epson-network-rs232-projector/issues"
+  },
+  "homepage": "https://github.com/joeferner/unisonht-epson-network-rs232-projector#readme",
+  "dependencies": {
+    "unisonht": "^1.0.0"
+  }
+}
