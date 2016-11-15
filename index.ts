@@ -3,7 +3,7 @@ import {Device, DeviceOptions} from "unisonht/lib/Device";
 interface EpsonNetworkRS232ProjectorOptions extends DeviceOptions {
   address: string;
   inputs: {
-    [deviceInputName: string];
+    [deviceInputName: string]: string;
   }
 }
 
