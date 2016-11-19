@@ -166,7 +166,7 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
         client.close();
         resolve(data);
       });
-      log.debug(`writing data: ${data}`);
+      log.debug(`writing data: ${data.trim()}`);
       client.send(data, this.options.port, this.options.address, (err) => {
         if (err) {
           client.close();
