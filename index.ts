@@ -1,4 +1,4 @@
-import {UnisonHT, UnisonHTDevice, DeviceInput} from "unisonht";
+import {UnisonHTDevice, DeviceInput} from "unisonht";
 import * as dgram from "dgram";
 import createLogger from "unisonht/lib/Log";
 
@@ -6,26 +6,33 @@ const log = createLogger('epsonNetworkRS232Projector');
 
 class EpsonNetworkRS232Projector implements UnisonHTDevice {
   private options: EpsonNetworkRS232Projector.Options;
+  private client: dgram.Socket;
 
   constructor(options: EpsonNetworkRS232Projector.Options) {
     this.options = options;
     this.options.port = this.options.port || 9000;
+
+    this.client = dgram.createSocket('udp4');
+    this.client.bind(this.options.port);
   }
 
   getName(): string {
     return this.options.name;
   }
-  
+
   ensureOn(): Promise<void> {
     return this.getPowerState()
-      .then((on) => {
-        if (on) {
+      .then((powerState) => {
+        if (powerState == EpsonNetworkRS232Projector.PowerState.ON) {
           return Promise.resolve();
         }
         return this.writeCommand('PWR ON')
           .catch((err) => {
-            log.error('could not power on first try. Trying again', err);
-            return this.writeCommand('PWR ON');
+            log.warn('could not power on first try. Trying again', err);
+            return this.writeCommand('PWR ON')
+              .catch((err) => {
+                log.warn('could not power on', err);
+              });
           });
       });
   }
@@ -56,11 +63,22 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
 
     return this.getInput()
       .then((currentInput) => {
+        log.debug(`currentInput ${JSON.stringify(currentInput)}`);
         if (sourceCodeHex.toLowerCase() == currentInput.rawCode.toLowerCase()) {
           log.debug(`Skipping set source. source already set to: ${sourceCodeHex}`);
           return;
         }
-        return this.writeCommand(`SOURCE ${sourceCodeHex}`);
+        return this.writeCommand(`SOURCE ${sourceCodeHex}`)
+          .catch((err) => {
+            log.warn('could not write source command', err);
+          });
+      })
+      .catch((err) => {
+        log.warn('could not get current input', err);
+        return this.writeCommand(`SOURCE ${sourceCodeHex}`)
+          .catch((err) => {
+            log.warn('could not write source command', err);
+          });
       });
   }
 
@@ -71,25 +89,32 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
   getPowerState(): Promise<EpsonNetworkRS232Projector.PowerState> {
     return this.writeCommand('PWR?')
       .then((result) => {
-        switch (result.toUpperCase()) {
-          case 'PWR=01':
-          case 'PWR=02':
+        var m = result.toUpperCase().match(/PWR=(\d\d)/);
+        if (!m) {
+          return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
+        }
+        switch (m[1]) {
+          case '01':
+          case '02':
             return EpsonNetworkRS232Projector.PowerState.ON;
-          case 'PWR=00':
+          case '00':
             return EpsonNetworkRS232Projector.PowerState.OFF;
           default:
             return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
         }
+      })
+      .catch((err)=> {
+        log.warn('Could not get power state', err);
+        return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
       });
   }
 
   private getInput(): Promise<EpsonNetworkRS232Projector.Input> {
     return this.writeCommand('SOURCE?')
       .then((result) => {
-        if (result.startsWith('SOURCE=')) {
-          return {
-            rawCode: this.fromSourceCode(result.substr('SOURCE='.length))
-          }
+        const m = result.match(/SOURCE=(\d\d)/);
+        if (m) {
+          return this.fromSourceCode(m[1]);
         } else {
           return {
             rawCode: result
@@ -160,20 +185,16 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
 
   private writeData(data: string): Promise<string> {
     return new Promise((resolve, reject)=> {
-      const client = dgram.createSocket('udp4');
-      client.on('message', (data) => {
+      this.client.once('message', (data) => {
         log.debug(`receive: ${data}`);
-        client.close();
-        resolve(data);
+        resolve(data.toString());
       });
       log.debug(`writing data: ${data.trim()}`);
-      client.send(data, this.options.port, this.options.address, (err) => {
+      this.client.send(data, this.options.port, this.options.address, (err) => {
         if (err) {
-          client.close();
           return reject(err);
         }
         setTimeout(()=> {
-          client.close();
           return reject(new Error('timeout waiting for data'));
         }, 1000);
       });
