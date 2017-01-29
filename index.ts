@@ -22,11 +22,12 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
 
   ensureOn(): Promise<void> {
     return this.getPowerState()
-      .then((powerState) => {
+      .then((powerState): Promise<void> => {
         if (powerState == EpsonNetworkRS232Projector.PowerState.ON) {
           return Promise.resolve();
         }
         return this.writeCommand('PWR ON')
+          .then(()=>{})
           .catch((err) => {
             log.warn('could not power on first try. Trying again', err);
             return this.writeCommand('PWR ON')
@@ -38,7 +39,8 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
   }
 
   ensureOff(): Promise<void> {
-    return this.writeCommand('PWR OFF');
+    return this.writeCommand('PWR OFF')
+      .then(()=>{});
   }
 
   buttonPress(button: string): Promise<void> {
@@ -46,7 +48,8 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
     if (!keyCode) {
       return Promise.reject(`Could not convert to key code: ${button}`);
     }
-    return this.writeCommand(`KEY ${keyCode.toString(16)}`);
+    return this.writeCommand(`KEY ${keyCode.toString(16)}`)
+      .then(()=>{});
   }
 
   changeInput(input: string): Promise<void> {
