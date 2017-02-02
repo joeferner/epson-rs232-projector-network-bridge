@@ -1,9 +1,10 @@
-const repl = require('repl');
-const EpsonNetworkRS232Projector = require('.').default;
-var projector = new EpsonNetworkRS232Projector({
-  address: '192.168.0.170'
-});
+import {UnisonHT} from "unisonht";
+import {EpsonNetworkRS232Projector} from ".";
 
-console.log('projector exported');
-const r = repl.start('> ');
-r.context.projector = projector;
+const unisonht = new UnisonHT();
+
+unisonht.use(new EpsonNetworkRS232Projector('projector', {
+  address: '192.168.0.170'
+}));
+
+unisonht.listen(3000);

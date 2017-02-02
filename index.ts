@@ -1,14 +1,15 @@
-import {UnisonHTDevice, DeviceInput} from "unisonht";
+import {Device, UnisonHT} from "unisonht";
+import * as express from "express";
 import * as dgram from "dgram";
-import createLogger from "unisonht/lib/Log";
+import * as HttpStatusCodes from "http-status-codes";
+import * as Boom from "boom";
 
-const log = createLogger('epsonNetworkRS232Projector');
-
-class EpsonNetworkRS232Projector implements UnisonHTDevice {
+export class EpsonNetworkRS232Projector extends Device {
   private options: EpsonNetworkRS232Projector.Options;
   private client: dgram.Socket;
 
-  constructor(options: EpsonNetworkRS232Projector.Options) {
+  constructor(deviceName: string, options: EpsonNetworkRS232Projector.Options) {
+    super(deviceName);
     this.options = options;
     this.options.port = this.options.port || 9000;
 
@@ -16,71 +17,110 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
     this.client.bind(this.options.port);
   }
 
-  getName(): string {
-    return this.options.name;
+  start(unisonht: UnisonHT): Promise<void> {
+    return super.start(unisonht)
+      .then(() => {
+        unisonht.getApp().post(`${this.getPathPrefix()}/on`, this.handleOn.bind(this));
+        unisonht.getApp().post(`${this.getPathPrefix()}/off`, this.handleOff.bind(this));
+        unisonht.getApp().post(`${this.getPathPrefix()}/input`, this.handleChangeInput.bind(this));
+      });
   }
 
-  ensureOn(): Promise<void> {
+  getStatus(): Promise<Device.Status> {
     return this.getPowerState()
-      .then((powerState): Promise<void> => {
-        if (powerState == EpsonNetworkRS232Projector.PowerState.ON) {
-          return Promise.resolve();
-        }
-        return this.writeCommand('PWR ON')
-          .then(()=>{})
-          .catch((err) => {
-            log.warn('could not power on first try. Trying again', err);
-            return this.writeCommand('PWR ON')
-              .catch((err) => {
-                log.warn('could not power on', err);
-              });
+      .then(powerState => {
+        return this.getInput()
+          .then((input) => {
+            return {
+              power: powerState,
+              input: input
+            }
           });
       });
   }
 
-  ensureOff(): Promise<void> {
-    return this.writeCommand('PWR OFF')
-      .then(()=>{});
+  private handleOn(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    this.getPowerState()
+      .then((powerState): Promise<void> => {
+        if (powerState == Device.PowerState.ON) {
+          res.status(HttpStatusCodes.NOT_MODIFIED).send();
+          return;
+        }
+        this.writeCommand('PWR ON')
+          .then(() => {
+            res.status(HttpStatusCodes.NO_CONTENT).send();
+          })
+          .catch((err) => {
+            this.log.warn('could not power on first try. Trying again', err);
+            this.writeCommand('PWR ON')
+              .catch(next);
+          });
+      });
   }
 
-  buttonPress(button: string): Promise<void> {
-    const keyCode = EpsonNetworkRS232Projector.toKeyCode(button);
+  private handleOff(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    this.writeCommand('PWR OFF')
+      .then(() => {
+        res.status(HttpStatusCodes.NO_CONTENT).send();
+      })
+      .catch(next);
+  }
+
+  protected handleButtonPress(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    const buttonName = req.query.button;
+    const keyCode = EpsonNetworkRS232Projector.toKeyCode(buttonName);
     if (!keyCode) {
-      return Promise.reject(`Could not convert to key code: ${button}`);
+      next(Boom.badRequest(`Could not convert to key code: ${buttonName}`));
+      return;
     }
-    return this.writeCommand(`KEY ${keyCode.toString(16)}`)
-      .then(()=>{});
+    this.writeCommand(`KEY ${keyCode.toString(16)}`)
+      .then(() => {
+        res.status(HttpStatusCodes.NO_CONTENT).send();
+      })
+      .catch(next);
   }
 
-  changeInput(input: string): Promise<void> {
-    const newInput = this.options.inputs[input];
+  private handleChangeInput(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    let input = req.query.input;
+    const newInput = this.options.inputMapping[input];
     if (newInput) {
       input = newInput;
     }
 
     const sourceCode = EpsonNetworkRS232Projector.toSourceCode(input);
     if (!sourceCode) {
-      return Promise.reject(`Invalid source: ${input}`);
+      next(Boom.badRequest(`Invalid source: ${input}`));
+      return;
     }
     const sourceCodeHex = sourceCode.toString(16);
 
-    return this.getInput()
+    this.getInput()
       .then((currentInput) => {
-        log.debug(`currentInput ${JSON.stringify(currentInput)}`);
+        this.log.debug(`currentInput ${JSON.stringify(currentInput)}`);
         if (sourceCodeHex.toLowerCase() == currentInput.rawCode.toLowerCase()) {
-          log.debug(`Skipping set source. source already set to: ${sourceCodeHex}`);
+          this.log.debug(`Skipping set source. source already set to: ${sourceCodeHex}`);
+          res.status(HttpStatusCodes.NOT_MODIFIED).send();
           return;
         }
-        return this.writeCommand(`SOURCE ${sourceCodeHex}`)
+        this.writeCommand(`SOURCE ${sourceCodeHex}`)
+          .then(() => {
+            res.status(HttpStatusCodes.NO_CONTENT).send();
+          })
           .catch((err) => {
-            log.warn('could not write source command', err);
+            this.log.warn('could not write source command', err);
+            next(err);
           });
+        return;
       })
       .catch((err) => {
-        log.warn('could not get current input', err);
-        return this.writeCommand(`SOURCE ${sourceCodeHex}`)
+        this.log.warn('could not get current input', err);
+        this.writeCommand(`SOURCE ${sourceCodeHex}`)
+          .then(() => {
+            res.status(HttpStatusCodes.NO_CONTENT).send();
+          })
           .catch((err) => {
-            log.warn('could not write source command', err);
+            this.log.warn('could not write source command', err);
+            next(err);
           });
       });
   }
@@ -89,26 +129,26 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
     return this.writeData(`${command}\r\n`);
   }
 
-  getPowerState(): Promise<EpsonNetworkRS232Projector.PowerState> {
+  private getPowerState(): Promise<Device.PowerState> {
     return this.writeCommand('PWR?')
       .then((result) => {
-        var m = result.toUpperCase().match(/PWR=(\d\d)/);
+        const m = result.toUpperCase().match(/PWR=(\d\d)/);
         if (!m) {
-          return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
+          return null;
         }
         switch (m[1]) {
           case '01':
           case '02':
-            return EpsonNetworkRS232Projector.PowerState.ON;
+            return Device.PowerState.ON;
           case '00':
-            return EpsonNetworkRS232Projector.PowerState.OFF;
+            return Device.PowerState.OFF;
           default:
-            return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
+            return null;
         }
       })
-      .catch((err)=> {
-        log.warn('Could not get power state', err);
-        return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
+      .catch((err) => {
+        this.log.warn('Could not get power state', err);
+        return null;
       });
   }
 
@@ -163,7 +203,7 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
   }
 
   private fromSourceCode(sourceCode: string): EpsonNetworkRS232Projector.Input {
-    var input;
+    let input;
     switch (sourceCode.toLowerCase()) {
       case "30":
         input = "hdmi1";
@@ -182,22 +222,22 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
     return {
       rawCode: sourceCode,
       deviceInput: input,
-      mappedInput: this.options.inputs[input.toUpperCase()]
+      mappedInput: this.options.inputMapping[input.toUpperCase()]
     };
   }
 
   private writeData(data: string): Promise<string> {
-    return new Promise((resolve, reject)=> {
+    return new Promise((resolve, reject) => {
       this.client.once('message', (data) => {
-        log.debug(`receive: ${data}`);
+        this.log.debug(`receive: ${data}`);
         resolve(data.toString());
       });
-      log.debug(`writing data: ${data.trim()}`);
+      this.log.debug(`writing data: ${data.trim()}`);
       this.client.send(data, this.options.port, this.options.address, (err) => {
         if (err) {
           return reject(err);
         }
-        setTimeout(()=> {
+        setTimeout(() => {
           return reject(new Error('timeout waiting for data'));
         }, 1000);
       });
@@ -205,31 +245,18 @@ class EpsonNetworkRS232Projector implements UnisonHTDevice {
   }
 }
 
-module EpsonNetworkRS232Projector {
+export module EpsonNetworkRS232Projector {
   export interface Options {
-    name: string;
     address: string;
     port?: number;
-    inputs: {
+    inputMapping?: {
       [deviceInputName: string]: string;
     }
   }
 
-  export interface Input extends DeviceInput {
+  export interface Input {
+    deviceInput: string;
+    mappedInput: string;
     rawCode: string;
   }
-
-  export class Inputs {
-    static get HDMI1() {
-      return 'HDMI1';
-    }
-  }
-
-  export enum PowerState {
-    ON,
-    OFF,
-    UNKNOWN
-  }
 }
-
-export default EpsonNetworkRS232Projector;
