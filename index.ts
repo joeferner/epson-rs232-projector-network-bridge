@@ -1,4 +1,4 @@
-import {Device, UnisonHT} from "unisonht";
+import {Device, UnisonHT, PromiseResponderResponse} from "unisonht";
 import * as express from "express";
 import * as dgram from "dgram";
 import * as HttpStatusCodes from "http-status-codes";
@@ -52,18 +52,13 @@ export class EpsonNetworkRS232Projector extends Device {
           })
           .catch((err) => {
             this.log.warn('could not power on first try. Trying again', err);
-            this.writeCommand('PWR ON')
-              .catch(next);
+            (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand('PWR ON'));
           });
       });
   }
 
   private handleOff(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    this.writeCommand('PWR OFF')
-      .then(() => {
-        res.status(HttpStatusCodes.NO_CONTENT).send();
-      })
-      .catch(next);
+    (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand('PWR OFF'));
   }
 
   protected handleButtonPress(req: express.Request, res: express.Response, next: express.NextFunction): void {
@@ -73,11 +68,7 @@ export class EpsonNetworkRS232Projector extends Device {
       next(Boom.badRequest(`Could not convert to key code: ${buttonName}`));
       return;
     }
-    this.writeCommand(`KEY ${keyCode.toString(16)}`)
-      .then(() => {
-        res.status(HttpStatusCodes.NO_CONTENT).send();
-      })
-      .catch(next);
+    (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand(`KEY ${keyCode.toString(16)}`));
   }
 
   private handleChangeInput(req: express.Request, res: express.Response, next: express.NextFunction): void {
@@ -102,26 +93,11 @@ export class EpsonNetworkRS232Projector extends Device {
           res.status(HttpStatusCodes.NOT_MODIFIED).send();
           return;
         }
-        this.writeCommand(`SOURCE ${sourceCodeHex}`)
-          .then(() => {
-            res.status(HttpStatusCodes.NO_CONTENT).send();
-          })
-          .catch((err) => {
-            this.log.warn('could not write source command', err);
-            next(err);
-          });
-        return;
+        (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand(`SOURCE ${sourceCodeHex}`));
       })
       .catch((err) => {
         this.log.warn('could not get current input', err);
-        this.writeCommand(`SOURCE ${sourceCodeHex}`)
-          .then(() => {
-            res.status(HttpStatusCodes.NO_CONTENT).send();
-          })
-          .catch((err) => {
-            this.log.warn('could not write source command', err);
-            next(err);
-          });
+        (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand(`SOURCE ${sourceCodeHex}`));
       });
   }
 
