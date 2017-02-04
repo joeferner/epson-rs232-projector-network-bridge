@@ -1,4 +1,4 @@
-import {Device, UnisonHT, PromiseResponderResponse} from "unisonht";
+import {Device, UnisonHT} from "unisonht";
 import * as express from "express";
 import * as dgram from "dgram";
 import * as HttpStatusCodes from "http-status-codes";
@@ -52,13 +52,13 @@ export class EpsonNetworkRS232Projector extends Device {
           })
           .catch((err) => {
             this.log.warn('could not power on first try. Trying again', err);
-            (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand('PWR ON'));
+            res.promiseNoContent(this.writeCommand('PWR ON'));
           });
       });
   }
 
   private handleOff(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand('PWR OFF'));
+    res.promiseNoContent(this.writeCommand('PWR OFF'));
   }
 
   protected handleButtonPress(req: express.Request, res: express.Response, next: express.NextFunction): void {
@@ -68,7 +68,7 @@ export class EpsonNetworkRS232Projector extends Device {
       next(Boom.badRequest(`Could not convert to key code: ${buttonName}`));
       return;
     }
-    (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand(`KEY ${keyCode.toString(16)}`));
+    res.promiseNoContent(this.writeCommand(`KEY ${keyCode.toString(16)}`));
   }
 
   private handleChangeInput(req: express.Request, res: express.Response, next: express.NextFunction): void {
@@ -93,11 +93,11 @@ export class EpsonNetworkRS232Projector extends Device {
           res.status(HttpStatusCodes.NOT_MODIFIED).send();
           return;
         }
-        (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand(`SOURCE ${sourceCodeHex}`));
+        res.promiseNoContent(this.writeCommand(`SOURCE ${sourceCodeHex}`));
       })
       .catch((err) => {
         this.log.warn('could not get current input', err);
-        (<PromiseResponderResponse>res).promiseNoContent(this.writeCommand(`SOURCE ${sourceCodeHex}`));
+        res.promiseNoContent(this.writeCommand(`SOURCE ${sourceCodeHex}`));
       });
   }
 
