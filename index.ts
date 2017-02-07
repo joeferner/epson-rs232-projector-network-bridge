@@ -1,20 +1,18 @@
-import {Device, UnisonHT} from "unisonht";
+import {Device, UnisonHT, UnisonHTResponse} from "unisonht";
 import * as express from "express";
 import * as dgram from "dgram";
 import * as HttpStatusCodes from "http-status-codes";
 import * as Boom from "boom";
 
 export class EpsonNetworkRS232Projector extends Device {
-  private options: EpsonNetworkRS232Projector.Options;
   private client: dgram.Socket;
 
   constructor(deviceName: string, options: EpsonNetworkRS232Projector.Options) {
-    super(deviceName);
-    this.options = options;
-    this.options.port = this.options.port || 9000;
+    super(deviceName, options);
+    options.port = options.port || 9000;
 
     this.client = dgram.createSocket('udp4');
-    this.client.bind(this.options.port);
+    this.client.bind(this.getOptions().port);
   }
 
   start(unisonht: UnisonHT): Promise<void> {
@@ -39,7 +37,7 @@ export class EpsonNetworkRS232Projector extends Device {
       });
   }
 
-  private handleOn(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  private handleOn(req: express.Request, res: UnisonHTResponse, next: express.NextFunction): void {
     this.getPowerState()
       .then((powerState): Promise<void> => {
         if (powerState == Device.PowerState.ON) {
@@ -57,11 +55,11 @@ export class EpsonNetworkRS232Projector extends Device {
       });
   }
 
-  private handleOff(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  private handleOff(req: express.Request, res: UnisonHTResponse, next: express.NextFunction): void {
     res.promiseNoContent(this.writeCommand('PWR OFF'));
   }
 
-  protected handleButtonPress(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  protected handleButtonPress(req: express.Request, res: UnisonHTResponse, next: express.NextFunction): void {
     const buttonName = req.query.button;
     const keyCode = EpsonNetworkRS232Projector.toKeyCode(buttonName);
     if (!keyCode) {
@@ -71,9 +69,9 @@ export class EpsonNetworkRS232Projector extends Device {
     res.promiseNoContent(this.writeCommand(`KEY ${keyCode.toString(16)}`));
   }
 
-  private handleChangeInput(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  private handleChangeInput(req: express.Request, res: UnisonHTResponse, next: express.NextFunction): void {
     let input = req.query.input;
-    const newInput = this.options.inputMapping[input];
+    const newInput = this.getOptions().inputMapping[input];
     if (newInput) {
       input = newInput;
     }
@@ -198,7 +196,7 @@ export class EpsonNetworkRS232Projector extends Device {
     return {
       rawCode: sourceCode,
       deviceInput: input,
-      mappedInput: this.options.inputMapping[input.toUpperCase()]
+      mappedInput: this.getOptions().inputMapping[input.toUpperCase()]
     };
   }
 
@@ -209,7 +207,7 @@ export class EpsonNetworkRS232Projector extends Device {
         resolve(data.toString());
       });
       this.log.debug(`writing data: ${data.trim()}`);
-      this.client.send(data, this.options.port, this.options.address, (err) => {
+      this.client.send(data, this.getOptions().port, this.getOptions().address, (err) => {
         if (err) {
           return reject(err);
         }
@@ -219,10 +217,14 @@ export class EpsonNetworkRS232Projector extends Device {
       });
     });
   }
+
+  public getOptions(): EpsonNetworkRS232Projector.Options {
+    return <EpsonNetworkRS232Projector.Options>super.getOptions();
+  }
 }
 
 export module EpsonNetworkRS232Projector {
-  export interface Options {
+  export interface Options extends Device.Options {
     address: string;
     port?: number;
     inputMapping?: {
@@ -234,5 +236,11 @@ export module EpsonNetworkRS232Projector {
     deviceInput: string;
     mappedInput: string;
     rawCode: string;
+  }
+
+  export class Inputs {
+    static get HDMI1() {
+      return 'HDMI1';
+    }
   }
 }
