@@ -59,18 +59,18 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
         if (powerState == Device.PowerState.ON) {
           return;
         }
-        return this.writeCommand('PWR ON')
+        return this.writeCommand('PWR ON', 10 * 1000)
           .then(() => {
           })
           .catch((err) => {
             this.log.warn('could not power on first try. Trying again', err);
-            return this.writeCommand('PWR ON');
+            return this.writeCommand('PWR ON', 10 * 1000);
           });
       });
   }
 
   public off(): Promise<void> {
-    return this.writeCommand('PWR OFF').then(() => {
+    return this.writeCommand('PWR OFF', 10 * 1000).then(() => {
     });
   }
 
@@ -121,13 +121,16 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
       });
   }
 
-  private writeCommand(command: string): Promise<string> {
-    return this.writeData(`${command}\r\n`);
+  private writeCommand(command: string, timeout?: number): Promise<string> {
+    return this.writeData(`${command}\r\n`, timeout);
   }
 
-  private writeData(data: string): Promise<string> {
+  private writeData(data: string, timeout?: number): Promise<string> {
+    timeout = timeout || 1000;
+
     const handleData = (resolve, data) => {
       this.log.debug(`receive: ${data}`);
+      console.log(data.toString());
       resolve(data.toString());
     };
     const handleError = (reject, err) => {
@@ -135,7 +138,7 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
       reject(err);
     };
     const removeListeners = () => {
-      this.client.removeListener('data', handleData);
+      this.client.removeAllListeners('data');
       this.client.removeListener('error', handleError);
     };
 
@@ -150,7 +153,7 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
         }
         setTimeout(() => {
           return reject(new Error('timeout waiting for data'));
-        }, 1000);
+        }, timeout);
       });
     })
       .then((data) => {

@@ -9,6 +9,7 @@ export class EpsonNetworkRS232Projector extends Device {
 
   constructor(deviceName: string, options: EpsonNetworkRS232Projector.Options) {
     super(deviceName, options);
+    options.inputMapping = options.inputMapping || {};
     this.client = process.env.NODE_ENV === 'development'
       ? new MockEpsonNetworkRS232ProjectorClient()
       : new EpsonNetworkRS232ProjectorClientImpl(options.address, options.port || 23);
@@ -27,9 +28,14 @@ export class EpsonNetworkRS232Projector extends Device {
   getStatus(): Promise<Device.Status> {
     return this.client.getPowerState()
       .then(powerState => {
-        return this.client.getInput()
+        const inputPromise: Promise<EpsonNetworkRS232Projector.Input> = powerState === Device.PowerState.ON
+          ? this.client.getInput()
+          : Promise.resolve({});
+        return inputPromise
           .then((input) => {
-            input.mappedInput = this.getOptions().inputMapping[input.deviceInput.toUpperCase()];
+            if (input && input.deviceInput) {
+              input.mappedInput = this.getOptions().inputMapping[input.deviceInput.toUpperCase()];
+            }
             return {
               power: powerState,
               input: input
