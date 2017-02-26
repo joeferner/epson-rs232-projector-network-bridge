@@ -11,7 +11,7 @@ export class EpsonNetworkRS232Projector extends Device {
     super(deviceName, options);
     this.client = process.env.NODE_ENV === 'development'
       ? new MockEpsonNetworkRS232ProjectorClient()
-      : new EpsonNetworkRS232ProjectorClientImpl(options.address, options.port || 9000);
+      : new EpsonNetworkRS232ProjectorClientImpl(options.address, options.port || 23);
   }
 
   start(unisonht: UnisonHT): Promise<void> {

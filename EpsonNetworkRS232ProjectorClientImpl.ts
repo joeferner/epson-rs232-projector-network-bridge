@@ -1,4 +1,4 @@
-import * as dgram from "dgram";
+import * as net from "net";
 import * as Logger from "bunyan";
 import {createLogger} from "../unisonht/lib/Log";
 import {EpsonNetworkRS232ProjectorClient} from "./EpsonNetworkRS232ProjectorClient";
@@ -8,7 +8,7 @@ import {EpsonNetworkRS232Projector} from "./index";
 export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232ProjectorClient {
   private address: string;
   private port: number;
-  private client: dgram.Socket;
+  private client: net.Socket;
   private log: Logger;
 
   constructor(address: string, port: number) {
@@ -18,9 +18,16 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
   }
 
   start(): Promise<void> {
-    this.client = dgram.createSocket('udp4');
-    this.client.bind(this.port);
-    return Promise.resolve();
+    this.client = new net.Socket();
+    return new Promise<void>((resolve, reject) => {
+      this.client.on('close', () => {
+        this.log.info('connection closed');
+        reject(new Error('connnection closed'));
+      });
+      this.client.connect(this.port, this.address, () => {
+        resolve();
+      });
+    });
   }
 
   public getPowerState(): Promise<Device.PowerState> {
@@ -119,13 +126,25 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
   }
 
   private writeData(data: string): Promise<string> {
+    const handleData = (resolve, data) => {
+      this.log.debug(`receive: ${data}`);
+      resolve(data.toString());
+    };
+    const handleError = (reject, err) => {
+      this.log.error('error', err);
+      reject(err);
+    };
+    const removeListeners = () => {
+      this.client.removeListener('data', handleData);
+      this.client.removeListener('error', handleError);
+    };
+
     return new Promise((resolve, reject) => {
-      this.client.once('message', (data) => {
-        this.log.debug(`receive: ${data}`);
-        resolve(data.toString());
-      });
+      this.client.once('data', handleData.bind(this, resolve));
+      this.client.once('error', handleData.bind(this, reject));
+
       this.log.debug(`writing data: ${data.trim()}`);
-      this.client.send(data, this.port, this.address, (err) => {
+      this.client.write(data, (err) => {
         if (err) {
           return reject(err);
         }
@@ -133,7 +152,15 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
           return reject(new Error('timeout waiting for data'));
         }, 1000);
       });
-    });
+    })
+      .then((data) => {
+        removeListeners();
+        return data;
+      })
+      .catch((err) => {
+        removeListeners();
+        throw err;
+      });
   }
 
   private static toSourceCode(input: string): number {
