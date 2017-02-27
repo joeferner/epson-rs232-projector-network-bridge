@@ -5,29 +5,28 @@ import {EpsonNetworkRS232ProjectorClient} from "./EpsonNetworkRS232ProjectorClie
 import {Device} from "unisonht";
 import {EpsonNetworkRS232Projector} from "./index";
 
+const TIMEOUT_SHORT = 5 * 1000;
+const TIMEOUT_LONG = 20 * 1000;
+
 export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232ProjectorClient {
   private address: string;
   private port: number;
   private client: net.Socket;
   private log: Logger;
+  private failOnTimeout: boolean;
+  private timeoutOverride?: number;
 
   constructor(address: string, port: number) {
+    this.timeoutOverride = 1000;
+    this.failOnTimeout = false;
+    
     this.address = address;
     this.port = port;
     this.log = createLogger('EpsonNetworkRS232ProjectorClient');
   }
 
   start(): Promise<void> {
-    this.client = new net.Socket();
-    return new Promise<void>((resolve, reject) => {
-      this.client.on('close', () => {
-        this.log.info('connection closed');
-        reject(new Error('connnection closed'));
-      });
-      this.client.connect(this.port, this.address, () => {
-        resolve();
-      });
-    });
+    return Promise.resolve();
   }
 
   public getPowerState(): Promise<Device.PowerState> {
@@ -59,18 +58,18 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
         if (powerState == Device.PowerState.ON) {
           return;
         }
-        return this.writeCommand('PWR ON', 10 * 1000)
+        return this.writeCommand('PWR ON', TIMEOUT_LONG)
           .then(() => {
           })
           .catch((err) => {
             this.log.warn('could not power on first try. Trying again', err);
-            return this.writeCommand('PWR ON', 10 * 1000);
+            return this.writeCommand('PWR ON', TIMEOUT_LONG);
           });
       });
   }
 
   public off(): Promise<void> {
-    return this.writeCommand('PWR OFF', 10 * 1000).then(() => {
+    return this.writeCommand('PWR OFF', TIMEOUT_LONG).then(() => {
     });
   }
 
@@ -126,44 +125,73 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
   }
 
   private writeData(data: string, timeout?: number): Promise<string> {
-    timeout = timeout || 1000;
+    timeout = timeout || TIMEOUT_SHORT;
+    if (this.timeoutOverride) {
+      timeout = this.timeoutOverride;
+    }
+    let timeoutFn;
 
-    const handleData = (resolve, data) => {
-      this.log.debug(`receive: ${data}`);
-      console.log(data.toString());
-      resolve(data.toString());
-    };
-    const handleError = (reject, err) => {
-      this.log.error('error', err);
-      reject(err);
-    };
-    const removeListeners = () => {
-      this.client.removeAllListeners('data');
-      this.client.removeListener('error', handleError);
-    };
+    return this.getClient()
+      .then((client) => {
+        const handleData = (resolve, data) => {
+          this.log.debug(`receive: ${data}`);
+          console.log(data.toString());
+          resolve(data.toString());
+        };
+        const handleError = (reject, err) => {
+          this.log.error('error', err);
+          reject(err);
+        };
+        const cleanup = () => {
+          clearTimeout(timeoutFn);
+          client.removeAllListeners('data');
+          client.removeListener('error', handleError);
+        };
 
-    return new Promise((resolve, reject) => {
-      this.client.once('data', handleData.bind(this, resolve));
-      this.client.once('error', handleData.bind(this, reject));
+        return new Promise<string>((resolve, reject) => {
+          client.once('data', handleData.bind(this, resolve));
+          client.once('error', handleData.bind(this, reject));
 
-      this.log.debug(`writing data: ${data.trim()}`);
-      this.client.write(data, (err) => {
-        if (err) {
-          return reject(err);
-        }
-        setTimeout(() => {
-          return reject(new Error('timeout waiting for data'));
-        }, timeout);
+          this.log.debug(`writing data: ${data.trim()}`);
+          client.write(data, (err) => {
+            if (err) {
+              return reject(err);
+            }
+            timeoutFn = setTimeout(() => {
+              cleanup();
+              if (this.failOnTimeout) {
+                return reject(new Error('timeout waiting for data'));
+              }
+              return resolve('');
+            }, timeout);
+          });
+        })
+          .then((data) => {
+            cleanup();
+            return data;
+          })
+          .catch((err) => {
+            cleanup();
+            throw err;
+          });
       });
-    })
-      .then((data) => {
-        removeListeners();
-        return data;
-      })
-      .catch((err) => {
-        removeListeners();
-        throw err;
+  }
+
+  private getClient(): Promise<net.Socket> {
+    if (this.client) {
+      return Promise.resolve(this.client);
+    }
+    const client = new net.Socket();
+    return new Promise<net.Socket>((resolve, reject) => {
+      client.on('close', () => {
+        this.log.info('connection closed');
+        reject(new Error('connection closed'));
       });
+      client.connect(this.port, this.address, () => {
+        this.client = client;
+        resolve(client);
+      });
+    });
   }
 
   private static toSourceCode(input: string): number {

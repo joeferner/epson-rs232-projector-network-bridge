@@ -3,6 +3,7 @@ import * as express from "express";
 import {EpsonNetworkRS232ProjectorClientImpl} from "./EpsonNetworkRS232ProjectorClientImpl";
 import {MockEpsonNetworkRS232ProjectorClient} from "./MockEpsonNetworkRS232ProjectorClient";
 import {EpsonNetworkRS232ProjectorClient} from "./EpsonNetworkRS232ProjectorClient";
+import * as Boom from "boom";
 
 export class EpsonNetworkRS232Projector extends Device {
   private client: EpsonNetworkRS232ProjectorClient;
@@ -54,6 +55,9 @@ export class EpsonNetworkRS232Projector extends Device {
 
   protected handleButtonPress(req: express.Request, res: UnisonHTResponse, next: express.NextFunction): void {
     const buttonName = req.query.button;
+    if (!buttonName) {
+      return next(Boom.badRequest('missing button query parameter'));
+    }
     res.promiseNoContent(this.client.buttonPress(buttonName));
   }
 
