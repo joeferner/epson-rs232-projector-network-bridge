@@ -1,9 +1,9 @@
-import * as net from "net";
 import * as Logger from "bunyan";
 import {createLogger} from "../unisonht/lib/Log";
 import {EpsonNetworkRS232ProjectorClient} from "./EpsonNetworkRS232ProjectorClient";
 import {Device} from "unisonht";
 import {EpsonNetworkRS232Projector} from "./index";
+import * as request from "request-promise";
 
 const TIMEOUT_SHORT = 5 * 1000;
 const TIMEOUT_LONG = 20 * 1000;
@@ -11,7 +11,6 @@ const TIMEOUT_LONG = 20 * 1000;
 export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232ProjectorClient {
   private address: string;
   private port: number;
-  private client: net.Socket;
   private log: Logger;
   private failOnTimeout: boolean;
   private timeoutOverride?: number;
@@ -19,7 +18,7 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
   constructor(address: string, port: number) {
     this.timeoutOverride = 1000;
     this.failOnTimeout = false;
-    
+
     this.address = address;
     this.port = port;
     this.log = createLogger('EpsonNetworkRS232ProjectorClient');
@@ -129,68 +128,20 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     if (this.timeoutOverride) {
       timeout = this.timeoutOverride;
     }
-    let timeoutFn;
 
-    return this.getClient()
-      .then((client) => {
-        const handleData = (resolve, data) => {
-          this.log.debug(`receive: ${data}`);
-          console.log(data.toString());
-          resolve(data.toString());
-        };
-        const handleError = (reject, err) => {
-          this.log.error('error', err);
-          reject(err);
-        };
-        const cleanup = () => {
-          clearTimeout(timeoutFn);
-          client.removeAllListeners('data');
-          client.removeListener('error', handleError);
-        };
-
-        return new Promise<string>((resolve, reject) => {
-          client.once('data', handleData.bind(this, resolve));
-          client.once('error', handleData.bind(this, reject));
-
-          this.log.debug(`writing data: ${data.trim()}`);
-          client.write(data, (err) => {
-            if (err) {
-              return reject(err);
-            }
-            timeoutFn = setTimeout(() => {
-              cleanup();
-              if (this.failOnTimeout) {
-                return reject(new Error('timeout waiting for data'));
-              }
-              return resolve('');
-            }, timeout);
-          });
-        })
-          .then((data) => {
-            cleanup();
-            return data;
-          })
-          .catch((err) => {
-            cleanup();
-            throw err;
-          });
-      });
-  }
-
-  private getClient(): Promise<net.Socket> {
-    if (this.client) {
-      return Promise.resolve(this.client);
-    }
-    const client = new net.Socket();
-    return new Promise<net.Socket>((resolve, reject) => {
-      client.on('close', () => {
-        this.log.info('connection closed');
-        reject(new Error('connection closed'));
-      });
-      client.connect(this.port, this.address, () => {
-        this.client = client;
-        resolve(client);
-      });
+    this.log.debug(`send: ${data}`);
+    return request({
+      method: 'POST',
+      uri: `http://${this.address}:${this.port}/send`,
+      body: {
+        value: data,
+        waitForResponse: true,
+        timeout: timeout
+      },
+      json: true
+    }).then(response => {
+      this.log.debug(`recv: ${response}`);
+      return <string>response[response.length - 1];
     });
   }
 
