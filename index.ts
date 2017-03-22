@@ -13,7 +13,7 @@ export class EpsonNetworkRS232Projector extends Device {
     options.inputMapping = options.inputMapping || {};
     this.client = process.env.NODE_ENV === 'development'
       ? new MockEpsonNetworkRS232ProjectorClient()
-      : new EpsonNetworkRS232ProjectorClientImpl(options.address, options.port || 23);
+      : new EpsonNetworkRS232ProjectorClientImpl(options.address, options.port || 8080);
   }
 
   start(unisonht: UnisonHT): Promise<void> {
