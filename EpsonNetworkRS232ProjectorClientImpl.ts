@@ -6,7 +6,7 @@ import {EpsonNetworkRS232Projector} from "./index";
 import * as request from "request-promise";
 
 const TIMEOUT_SHORT = 5 * 1000;
-const TIMEOUT_LONG = 20 * 1000;
+const TIMEOUT_LONG = 60 * 1000;
 
 export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232ProjectorClient {
   private address: string;
@@ -59,10 +59,6 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
         }
         return this.writeCommand('PWR ON', TIMEOUT_LONG)
           .then(() => {
-          })
-          .catch((err) => {
-            this.log.warn('could not power on first try. Trying again', err);
-            return this.writeCommand('PWR ON', TIMEOUT_LONG);
           });
       });
   }
