@@ -26,13 +26,12 @@
     "unisonht": "0.0.x"
   },
   "dependencies": {
-    "debug": "^4.1.1",
-    "request": "^2.88.0",
-    "request-promise": "^4.2.4"
+    "axios": "^0.19.0",
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@types/debug": "^4.1.4",
-    "@types/request-promise": "^4.1.44",
+    "@types/node": "^12.7.1",
     "typescript": "^3.5.3"
   }
 }

@@ -1,6 +1,6 @@
 import {EpsonNetworkRS232ProjectorClient} from "./EpsonNetworkRS232ProjectorClient";
 import {EpsonNetworkRS232Projector} from "./index";
-import request from "request-promise";
+import axios from "axios";
 import Debug from 'debug';
 
 const debug = Debug('EpsonNetworkRS232ProjectorClientImpl');
@@ -100,18 +100,12 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
         }
 
         debug(`send: ${data}`);
-        const response = await request({
-            method: 'POST',
-            uri: `http://${this.address}:${this.port}/send`,
-            body: {
-                value: data,
-                waitForResponse: true,
-                timeout: timeout
-            },
-            json: true
+        const response = await axios.post(`http://${this.address}:${this.port}/send`, data, {
+            timeout
         });
-        debug(`recv: ${response}`);
-        return <string>response[response.length - 1];
+        const responseData = response.data as string;
+        debug(`recv: ${responseData}`);
+        return responseData[responseData.length - 1];
     }
 
     private static toKeyCode(button: string): number | undefined {
