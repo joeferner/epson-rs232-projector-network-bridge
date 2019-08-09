@@ -16,6 +16,7 @@
         "allow-pascal-case"
       ]
     },
-    "no-namespace": false
+    "no-namespace": false,
+    "no-console": false
   }
 }
