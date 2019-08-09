@@ -5,7 +5,7 @@ import {
     RouteHandlerResponse,
     UnisonHT,
     UnisonHTDevice
-} from "unisonht";
+} from "@unisonht/unisonht";
 import {EpsonNetworkRS232ProjectorClientImpl} from "./EpsonNetworkRS232ProjectorClientImpl";
 import {EpsonNetworkRS232ProjectorClientMock} from "./EpsonNetworkRS232ProjectorClientMock";
 import {EpsonNetworkRS232ProjectorClient} from "./EpsonNetworkRS232ProjectorClient";

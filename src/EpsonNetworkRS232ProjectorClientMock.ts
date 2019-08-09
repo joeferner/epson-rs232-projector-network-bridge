@@ -2,7 +2,7 @@ import {EpsonNetworkRS232ProjectorClient} from "./EpsonNetworkRS232ProjectorClie
 import {EpsonNetworkRS232Projector} from "./index";
 import Debug from 'debug';
 
-const debug = Debug('EpsonNetworkRS232ProjectorClientMock');
+const debug = Debug('EpsonNetworkRS232Projector:ClientMock');
 
 export class EpsonNetworkRS232ProjectorClientMock implements EpsonNetworkRS232ProjectorClient {
     private input: EpsonNetworkRS232Projector.Input = EpsonNetworkRS232Projector.Input.HDMI1;

@@ -1,5 +1,5 @@
 {
-  "name": "unisonht-epson-network-rs232-projector",
+  "name": "@unisonht/epson-network-rs232-projector",
   "version": "0.0.1",
   "description": "UnisonHT Plugin for Epson Networked RS232 Projector",
   "main": "dist/index.js",
@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/joeferner/unisonht-epson-network-rs232-projector#readme",
   "peerDependencies": {
-    "unisonht": "0.0.x"
+    "@unisonht/unisonht": "0.0.x"
   },
   "dependencies": {
     "axios": "^0.19.0",

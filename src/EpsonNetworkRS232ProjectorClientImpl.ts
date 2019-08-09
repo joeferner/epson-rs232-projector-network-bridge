@@ -3,7 +3,7 @@ import {EpsonNetworkRS232Projector} from "./index";
 import axios from "axios";
 import Debug from 'debug';
 
-const debug = Debug('EpsonNetworkRS232ProjectorClientImpl');
+const debug = Debug('EpsonNetworkRS232Projector:ClientImpl');
 
 const TIMEOUT_SHORT = 5 * 1000;
 const TIMEOUT_LONG = 60 * 1000;

@@ -1,4 +1,4 @@
-import {UnisonHT} from "unisonht";
+import {UnisonHT} from "@unisonht/unisonht";
 import {EpsonNetworkRS232Projector} from ".";
 
 const unisonht = new UnisonHT({});
