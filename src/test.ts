@@ -1,7 +1,8 @@
-import { UnisonHT } from '@unisonht/unisonht';
+import { UnisonHT, WebApi } from '@unisonht/unisonht';
 import { EpsonNetworkRS232Projector } from '.';
 
 const unisonht = new UnisonHT({});
+unisonht.use(new WebApi({ port: 3000 }));
 
 unisonht.use(
   new EpsonNetworkRS232Projector('projector', {
@@ -9,4 +10,4 @@ unisonht.use(
   }),
 );
 
-unisonht.listen(3000);
+unisonht.start();
