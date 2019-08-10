@@ -1,4 +1,6 @@
 import { EpsonNetworkRS232Projector } from './index';
+import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
+import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232ProjectorClientInput';
 
 export interface EpsonNetworkRS232ProjectorClient {
   start(): Promise<void>;
@@ -7,11 +9,11 @@ export interface EpsonNetworkRS232ProjectorClient {
 
   off(): Promise<void>;
 
-  changeInput(input: EpsonNetworkRS232Projector.Input): Promise<void>;
+  changeInput(input: EpsonNetworkRS232ProjectorClientInput): Promise<void>;
 
-  buttonPress(buttonName: string): Promise<void>;
+  buttonPress(button: EpsonNetworkRS232ProjectorClientButton): Promise<void>;
 
-  getInput(): Promise<EpsonNetworkRS232Projector.Input>;
+  getInput(): Promise<EpsonNetworkRS232ProjectorClientInput>;
 
   getPowerState(): Promise<EpsonNetworkRS232Projector.PowerState>;
 }

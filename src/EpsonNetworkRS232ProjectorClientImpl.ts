@@ -2,6 +2,8 @@ import { EpsonNetworkRS232ProjectorClient } from './EpsonNetworkRS232ProjectorCl
 import { EpsonNetworkRS232Projector } from './index';
 import axios from 'axios';
 import Debug from 'debug';
+import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
+import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232ProjectorClientInput';
 
 const debug = Debug('EpsonNetworkRS232Projector:ClientImpl');
 
@@ -56,7 +58,7 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     await this.writeCommand('PWR OFF', TIMEOUT_LONG);
   }
 
-  public async changeInput(input: EpsonNetworkRS232Projector.Input): Promise<void> {
+  public async changeInput(input: EpsonNetworkRS232ProjectorClientInput): Promise<void> {
     let currentInput;
     try {
       currentInput = await this.getInput();
@@ -71,22 +73,18 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     await this.writeCommand(`SOURCE ${input.toString(16)}`);
   }
 
-  public async buttonPress(buttonName: string): Promise<void> {
-    const keyCode = EpsonNetworkRS232ProjectorClientImpl.toKeyCode(buttonName);
-    if (!keyCode) {
-      throw new Error(`Could not convert to key code: ${buttonName}`);
-    }
-    await this.writeCommand(`KEY ${keyCode.toString(16)}`);
+  public async buttonPress(button: EpsonNetworkRS232ProjectorClientButton): Promise<void> {
+    await this.writeCommand(`KEY ${button.toString(16)}`);
   }
 
-  public async getInput(): Promise<EpsonNetworkRS232Projector.Input> {
+  public async getInput(): Promise<EpsonNetworkRS232ProjectorClientInput> {
     const result = await this.writeCommand('SOURCE?');
     const m = result.match(/SOURCE=(\d\d)/);
     if (m) {
       return parseInt(m[1], 16);
     } else {
       debug(`unknown input ${result}`);
-      return (result as unknown) as EpsonNetworkRS232Projector.Input;
+      return (result as unknown) as EpsonNetworkRS232ProjectorClientInput;
     }
   }
 
@@ -107,31 +105,5 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     const responseData = response.data as string;
     debug(`recv: ${responseData}`);
     return responseData[responseData.length - 1];
-  }
-
-  private static toKeyCode(button: string): number | undefined {
-    switch (button.toLowerCase()) {
-      case 'power':
-        return 0x01;
-      case 'menu':
-        return 0x03;
-      case 'esc':
-        return 0x05;
-      case 'enter':
-        return 0x16;
-      case 'up':
-        return 0x35;
-      case 'down':
-        return 0x36;
-      case 'left':
-        return 0x37;
-      case 'right':
-        return 0x38;
-      case 'source':
-        return 0x48;
-      default:
-        debug(`unhandled key code: ${button}`);
-        return undefined;
-    }
   }
 }
