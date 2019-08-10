@@ -3,9 +3,9 @@ import {
   NextFunction,
   RouteHandlerRequest,
   RouteHandlerResponse,
-  StandardKey,
-  SupportedKey,
-  SupportedKeys,
+  StandardButton,
+  SupportedButton,
+  SupportedButtons,
   UnisonHT,
   UnisonHTDevice,
 } from '@unisonht/unisonht';
@@ -58,29 +58,32 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
     };
   }
 
-  public getSupportedKeys(): SupportedKeys {
+  public getSupportedButtons(): SupportedButtons {
     return {
-      [StandardKey.POWER_TOGGLE]: this.createButtonPress('Power Toggle', EpsonNetworkRS232ProjectorClientButton.POWER),
-      [StandardKey.MENU]: this.createButtonPress('Menu', EpsonNetworkRS232ProjectorClientButton.MENU),
-      [StandardKey.ESC]: this.createButtonPress('ESC', EpsonNetworkRS232ProjectorClientButton.ESC),
-      [StandardKey.ENTER]: this.createButtonPress('Enter', EpsonNetworkRS232ProjectorClientButton.ENTER),
-      [StandardKey.UP]: this.createButtonPress('Up', EpsonNetworkRS232ProjectorClientButton.UP),
-      [StandardKey.DOWN]: this.createButtonPress('Down', EpsonNetworkRS232ProjectorClientButton.DOWN),
-      [StandardKey.LEFT]: this.createButtonPress('Left', EpsonNetworkRS232ProjectorClientButton.LEFT),
-      [StandardKey.RIGHT]: this.createButtonPress('Right', EpsonNetworkRS232ProjectorClientButton.RIGHT),
-      [StandardKey.INPUT_TOGGLE]: this.createButtonPress('Source', EpsonNetworkRS232ProjectorClientButton.SOURCE),
-      [StandardKey.INPUT_HDMI1]: this.createInputButtonPress(
+      [StandardButton.POWER_TOGGLE]: this.createButtonPress(
+        'Power Toggle',
+        EpsonNetworkRS232ProjectorClientButton.POWER,
+      ),
+      [StandardButton.MENU]: this.createButtonPress('Menu', EpsonNetworkRS232ProjectorClientButton.MENU),
+      [StandardButton.ESC]: this.createButtonPress('ESC', EpsonNetworkRS232ProjectorClientButton.ESC),
+      [StandardButton.ENTER]: this.createButtonPress('Enter', EpsonNetworkRS232ProjectorClientButton.ENTER),
+      [StandardButton.UP]: this.createButtonPress('Up', EpsonNetworkRS232ProjectorClientButton.UP),
+      [StandardButton.DOWN]: this.createButtonPress('Down', EpsonNetworkRS232ProjectorClientButton.DOWN),
+      [StandardButton.LEFT]: this.createButtonPress('Left', EpsonNetworkRS232ProjectorClientButton.LEFT),
+      [StandardButton.RIGHT]: this.createButtonPress('Right', EpsonNetworkRS232ProjectorClientButton.RIGHT),
+      [StandardButton.INPUT_TOGGLE]: this.createButtonPress('Source', EpsonNetworkRS232ProjectorClientButton.SOURCE),
+      [StandardButton.INPUT_HDMI1]: this.createInputButtonPress(
         'Input: HDMI1',
         EpsonNetworkRS232ProjectorClientInput.HDMI1,
       ),
-      [StandardKey.INPUT_HDMI2]: this.createInputButtonPress(
+      [StandardButton.INPUT_HDMI2]: this.createInputButtonPress(
         'Input: HDMI2',
         EpsonNetworkRS232ProjectorClientInput.HDMI2,
       ),
-      [StandardKey.POWER_ON]: {
+      [StandardButton.POWER_ON]: {
         name: 'Power On',
-        handleKeyPress: async (
-          key: string,
+        handleButtonPress: async (
+          button: string,
           request: RouteHandlerRequest,
           response: RouteHandlerResponse,
           next: NextFunction,
@@ -89,10 +92,10 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
           response.send();
         },
       },
-      [StandardKey.POWER_OFF]: {
+      [StandardButton.POWER_OFF]: {
         name: 'Power Off',
-        handleKeyPress: async (
-          key: string,
+        handleButtonPress: async (
+          button: string,
           request: RouteHandlerRequest,
           response: RouteHandlerResponse,
           next: NextFunction,
@@ -104,11 +107,11 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
     };
   }
 
-  private createInputButtonPress(name: string, input: EpsonNetworkRS232ProjectorClientInput): SupportedKey {
+  private createInputButtonPress(name: string, input: EpsonNetworkRS232ProjectorClientInput): SupportedButton {
     return {
       name,
-      handleKeyPress: async (
-        key: string,
+      handleButtonPress: async (
+        button: string,
         request: RouteHandlerRequest,
         response: RouteHandlerResponse,
         next: NextFunction,
@@ -119,11 +122,11 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
     };
   }
 
-  private createButtonPress(name: string, button: EpsonNetworkRS232ProjectorClientButton): SupportedKey {
+  private createButtonPress(name: string, button: EpsonNetworkRS232ProjectorClientButton): SupportedButton {
     return {
       name,
-      handleKeyPress: async (
-        key: string,
+      handleButtonPress: async (
+        btn: string,
         request: RouteHandlerRequest,
         response: RouteHandlerResponse,
         next: NextFunction,
