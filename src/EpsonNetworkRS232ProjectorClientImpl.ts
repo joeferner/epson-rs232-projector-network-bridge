@@ -8,7 +8,6 @@ import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232Projec
 const debug = Debug('EpsonNetworkRS232Projector:ClientImpl');
 
 const TIMEOUT_SHORT = 3 * 1000;
-const TIMEOUT_LONG = 60 * 1000;
 
 export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232ProjectorClient {
   private readonly address: string;
@@ -49,36 +48,40 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
   }
 
   public async on(): Promise<void> {
-    const powerState = await this.getPowerState();
-    if (powerState === EpsonNetworkRS232Projector.PowerState.ON) {
-      return;
-    }
-    await this.writeCommand('PWR ON', TIMEOUT_LONG);
+    await this.setPower(EpsonNetworkRS232Projector.PowerState.ON, 'PWR ON');
   }
 
   public async off(): Promise<void> {
-    await this.writeCommand('PWR OFF', TIMEOUT_LONG);
+    await this.setPower(EpsonNetworkRS232Projector.PowerState.OFF, 'PWR OFF');
+  }
+
+  private async setPower(desiredState: EpsonNetworkRS232Projector.PowerState, command: string): Promise<void> {
+    const retries = 10;
+    for (let retryCount = 0; retryCount < retries; retryCount++) {
+      try {
+        const powerState = await this.getPowerState();
+        if (powerState === desiredState) {
+          return;
+        }
+        await this.writeCommand(command, TIMEOUT_SHORT, false);
+        await this.sleep(TIMEOUT_SHORT);
+      } catch (err) {
+        console.error('failed to set power state', err);
+        if (retryCount === retries - 1) {
+          throw err;
+        }
+      }
+    }
   }
 
   public async changeInput(input: EpsonNetworkRS232ProjectorClientInput): Promise<void> {
-    let currentInput;
-    try {
-      currentInput = await this.getInput();
-    } catch (err) {
-      debug('could not get current input', err);
-    }
-    debug(`currentInput ${currentInput ? JSON.stringify(currentInput) : 'unknown'}`);
-    if (currentInput && input === currentInput) {
-      debug(`Skipping set source. source already set to: ${input}`);
-      return;
-    }
     for (let retryCount = 0; retryCount < 3; retryCount++) {
-      await this.writeCommand(`SOURCE ${input.toString(16)}`, TIMEOUT_SHORT, false);
-      await this.sleep(3000);
-      const newInput = await this.getInput();
-      if (newInput === input) {
+      const currentInput = await this.getInput();
+      if (currentInput === input) {
         return;
       }
+      await this.writeCommand(`SOURCE ${input.toString(16)}`, TIMEOUT_SHORT, false);
+      await this.sleep(TIMEOUT_SHORT);
     }
     throw new Error('failed to set input');
   }
