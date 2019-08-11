@@ -24,6 +24,9 @@
    sudo ntpd -q -g
    sudo /etc/init.d/ntp start
 
+1. Reboot nightly
+   1. `sudo vi /etc/crontab`
+   1. Add `0 5 * * * root reboot`
 1. Install node
    1. `uname -m`
    1. `sudo apt-get install xz-utils`
