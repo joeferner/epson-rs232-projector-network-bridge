@@ -7,7 +7,7 @@ import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232Projec
 
 const debug = Debug('EpsonNetworkRS232Projector:ClientImpl');
 
-const TIMEOUT_SHORT = 5 * 1000;
+const TIMEOUT_SHORT = 3 * 1000;
 const TIMEOUT_LONG = 60 * 1000;
 
 export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232ProjectorClient {
@@ -17,7 +17,6 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
   private readonly timeoutOverride?: number;
 
   constructor(address: string, port: number) {
-    this.timeoutOverride = 1000;
     this.failOnTimeout = false;
     this.address = address;
     this.port = port;
@@ -29,6 +28,9 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
 
   public async getPowerState(): Promise<EpsonNetworkRS232Projector.PowerState> {
     const result = await this.writeCommand('PWR?');
+    if (!result) {
+      throw new Error('Failed to query source. Results were empty.');
+    }
     const m = result.toUpperCase().match(/PWR=(\d\d)/);
     if (!m) {
       debug(`unknown power state: ${result}`);
@@ -70,7 +72,23 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
       debug(`Skipping set source. source already set to: ${input}`);
       return;
     }
-    await this.writeCommand(`SOURCE ${input.toString(16)}`);
+    for (let retryCount = 0; retryCount < 3; retryCount++) {
+      await this.writeCommand(`SOURCE ${input.toString(16)}`, TIMEOUT_SHORT, false);
+      await this.sleep(3000);
+      const newInput = await this.getInput();
+      if (newInput === input) {
+        return;
+      }
+    }
+    throw new Error('failed to set input');
+  }
+
+  private sleep(time: number): Promise<void> {
+    return new Promise<void>(resolve => {
+      setTimeout(() => {
+        resolve();
+      }, time);
+    });
   }
 
   public async buttonPress(button: EpsonNetworkRS232ProjectorClientButton): Promise<void> {
@@ -79,7 +97,10 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
 
   public async getInput(): Promise<EpsonNetworkRS232ProjectorClientInput> {
     const result = await this.writeCommand('SOURCE?');
-    const m = result.match(/SOURCE=(\d\d)/);
+    if (!result) {
+      throw new Error('Failed to query source. Results were empty.');
+    }
+    const m = result.match(/SOURCE=([0-9a-fA-F]+)/);
     if (m) {
       return parseInt(m[1], 16);
     } else {
@@ -88,22 +109,47 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     }
   }
 
-  private async writeCommand(command: string, timeout?: number): Promise<string> {
-    return this.writeData(`${command}\r\n`, timeout);
+  private async writeCommand(
+    command: string,
+    timeout?: number,
+    waitForResponse?: boolean,
+  ): Promise<string | undefined> {
+    const retryCount = 2;
+    for (let i = 0; i < retryCount; i++) {
+      try {
+        const result = await this.writeData(`${command}\r\n`, timeout, waitForResponse);
+        if (result === undefined) {
+          return;
+        }
+        for (const resultItem of result) {
+          if (resultItem.indexOf('ERR') >= 0) {
+            throw new Error(`Error received: ${result}`);
+          }
+        }
+        return result[result.length - 1];
+      } catch (err) {
+        if (i + 1 === retryCount) {
+          throw err;
+        }
+        console.error(`failed to write command: ${command}. retying`, err);
+      }
+    }
   }
 
-  private async writeData(data: string, timeout?: number): Promise<string> {
+  private async writeData(data: string, timeout?: number, waitForResponse?: boolean): Promise<string[] | undefined> {
     timeout = timeout || TIMEOUT_SHORT;
-    if (this.timeoutOverride) {
-      timeout = this.timeoutOverride;
-    }
-
-    debug(`send: ${data}`);
-    const response = await axios.post(`http://${this.address}:${this.port}/send`, data, {
-      timeout,
-    });
-    const responseData = response.data as string;
-    debug(`recv: ${responseData}`);
-    return responseData[responseData.length - 1];
+    debug(`send: ${data.trim()}`);
+    const response = await axios.post(
+      `http://${this.address}:${this.port}/send`,
+      {
+        value: data,
+        waitForResponse: waitForResponse !== undefined ? waitForResponse : true,
+        timeout,
+      },
+      { timeout },
+    );
+    const responseData = response.data as string[];
+    debug(`recv: %o`, responseData);
+    return responseData;
   }
 }
