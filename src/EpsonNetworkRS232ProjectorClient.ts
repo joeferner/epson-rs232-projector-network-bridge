@@ -1,4 +1,4 @@
-import { EpsonNetworkRS232Projector } from './index';
+import { EpsonNetworkRS232ProjectorPowerState } from './index';
 import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
 import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232ProjectorClientInput';
 
@@ -15,5 +15,5 @@ export interface EpsonNetworkRS232ProjectorClient {
 
   getInput(): Promise<EpsonNetworkRS232ProjectorClientInput>;
 
-  getPowerState(): Promise<EpsonNetworkRS232Projector.PowerState>;
+  getPowerState(): Promise<EpsonNetworkRS232ProjectorPowerState>;
 }

@@ -1,5 +1,5 @@
 import { EpsonNetworkRS232ProjectorClient } from './EpsonNetworkRS232ProjectorClient';
-import { EpsonNetworkRS232Projector } from './index';
+import { EpsonNetworkRS232ProjectorPowerState } from './index';
 import axios from 'axios';
 import Debug from 'debug';
 import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
@@ -25,7 +25,7 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     // nothing needed
   }
 
-  public async getPowerState(): Promise<EpsonNetworkRS232Projector.PowerState> {
+  public async getPowerState(): Promise<EpsonNetworkRS232ProjectorPowerState> {
     const result = await this.writeCommand('PWR?');
     if (!result) {
       throw new Error('Failed to query source. Results were empty.');
@@ -33,29 +33,29 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     const m = result.toUpperCase().match(/PWR=(\d\d)/);
     if (!m) {
       debug(`unknown power state: ${result}`);
-      return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
+      return EpsonNetworkRS232ProjectorPowerState.UNKNOWN;
     }
     switch (m[1]) {
       case '01':
       case '02':
-        return EpsonNetworkRS232Projector.PowerState.ON;
+        return EpsonNetworkRS232ProjectorPowerState.ON;
       case '00':
-        return EpsonNetworkRS232Projector.PowerState.OFF;
+        return EpsonNetworkRS232ProjectorPowerState.OFF;
       default:
         debug(`unknown power state: ${result}`);
-        return EpsonNetworkRS232Projector.PowerState.UNKNOWN;
+        return EpsonNetworkRS232ProjectorPowerState.UNKNOWN;
     }
   }
 
   public async on(): Promise<void> {
-    await this.setPower(EpsonNetworkRS232Projector.PowerState.ON, 'PWR ON');
+    await this.setPower(EpsonNetworkRS232ProjectorPowerState.ON, 'PWR ON');
   }
 
   public async off(): Promise<void> {
-    await this.setPower(EpsonNetworkRS232Projector.PowerState.OFF, 'PWR OFF');
+    await this.setPower(EpsonNetworkRS232ProjectorPowerState.OFF, 'PWR OFF');
   }
 
-  private async setPower(desiredState: EpsonNetworkRS232Projector.PowerState, command: string): Promise<void> {
+  private async setPower(desiredState: EpsonNetworkRS232ProjectorPowerState, command: string): Promise<void> {
     const retries = 10;
     for (let retryCount = 0; retryCount < retries; retryCount++) {
       try {

@@ -13,6 +13,7 @@ import { EpsonNetworkRS232ProjectorClientMock } from './EpsonNetworkRS232Project
 import { EpsonNetworkRS232ProjectorClient } from './EpsonNetworkRS232ProjectorClient';
 import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
 import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232ProjectorClientInput';
+import { EpsonNetworkRS232ProjectorPowerState } from './EpsonNetworkRS232ProjectorPowerState';
 
 export interface EpsonNetworkRS232ProjectorOptions {
   useMockClient?: boolean;
@@ -20,14 +21,7 @@ export interface EpsonNetworkRS232ProjectorOptions {
   port?: number;
 }
 
-enum PowerState {
-  ON = 'ON',
-  OFF = 'OFF',
-  UNKNOWN = 'UNKNOWN',
-}
-
 export class EpsonNetworkRS232Projector implements UnisonHTDevice {
-  public static readonly PowerState = PowerState;
   private readonly client: EpsonNetworkRS232ProjectorClient;
   private readonly deviceName: string;
 
@@ -57,7 +51,7 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
 
   public async getStatus(): Promise<DeviceStatus> {
     const powerState = await this.client.getPowerState();
-    const input = powerState === EpsonNetworkRS232Projector.PowerState.ON ? await this.client.getInput() : undefined;
+    const input = powerState === EpsonNetworkRS232ProjectorPowerState.ON ? await this.client.getInput() : undefined;
     return {
       power: powerState,
       input,
