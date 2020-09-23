@@ -1,6 +1,6 @@
 {
   "name": "@unisonht/epson-network-rs232-projector",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "UnisonHT Plugin for Epson Networked RS232 Projector",
   "main": "dist/index.js",
   "types": "src/index.ts",
