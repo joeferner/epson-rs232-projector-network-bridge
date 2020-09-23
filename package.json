@@ -5,13 +5,14 @@
   "main": "dist/index.js",
   "types": "src/index.ts",
   "scripts": {
-    "test:watch": "nodemon ./dist/test.js",
+    "prepare": "rm -rf dist && npm run build",
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-    "lint": "tslint -p tsconfig.json",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm run lint"
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint --fix --ext .ts .",
+    "lint-staged": "lint-staged",
+    "pre-commit": "npm run format && npm run lint-staged",
+    "test:watch": "nodemon ./dist/test.js"
   },
   "repository": {
     "type": "git",
@@ -29,29 +30,26 @@
   },
   "homepage": "https://github.com/joeferner/unisonht-epson-network-rs232-projector#readme",
   "dependencies": {
-    "axios": "^0.19.0",
-    "debug": "^4.1.1",
+    "axios": "0.20.x",
+    "debug": "4.2.x",
     "@unisonht/unisonht": "0.0.x"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.4",
-    "@types/node": "^12.7.1",
-    "husky": "^3.0.3",
-    "lint-staged": "^9.2.1",
-    "prettier": "^1.18.2",
-    "tslint": "^5.18.0",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.5.3"
+    "@types/debug": "4.x",
+    "@types/node": "14.x",
+    "@types/yargs": "15.x",
+    "@typescript-eslint/eslint-plugin": "4.x",
+    "@typescript-eslint/parser": "4.x",
+    "eslint": "7.x",
+    "husky": "4.x",
+    "lint-staged": "10.x",
+    "prettier": "2.x",
+    "ts-node": "9.x",
+    "typescript": "4.x"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && npm run lint"
+      "pre-commit": "npm run pre-commit"
     }
-  },
-  "lint-staged": {
-    "*": [
-      "npm run format",
-      "git add"
-    ]
   }
 }

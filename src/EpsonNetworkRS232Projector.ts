@@ -1,6 +1,5 @@
 import {
   DeviceStatus,
-  NextFunction,
   RouteHandlerRequest,
   RouteHandlerResponse,
   StandardButton,
@@ -21,7 +20,14 @@ export interface EpsonNetworkRS232ProjectorOptions {
   port?: number;
 }
 
+enum PowerState {
+  ON = 'ON',
+  OFF = 'OFF',
+  UNKNOWN = 'UNKNOWN',
+}
+
 export class EpsonNetworkRS232Projector implements UnisonHTDevice {
+  public static readonly PowerState = PowerState;
   private readonly client: EpsonNetworkRS232ProjectorClient;
   private readonly deviceName: string;
 
@@ -86,7 +92,6 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
           button: string,
           request: RouteHandlerRequest,
           response: RouteHandlerResponse,
-          next: NextFunction,
         ): Promise<void> => {
           await this.client.on();
           response.send();
@@ -98,7 +103,6 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
           button: string,
           request: RouteHandlerRequest,
           response: RouteHandlerResponse,
-          next: NextFunction,
         ): Promise<void> => {
           await this.client.off();
           response.send();
@@ -114,7 +118,6 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
         button: string,
         request: RouteHandlerRequest,
         response: RouteHandlerResponse,
-        next: NextFunction,
       ): Promise<void> => {
         await this.client.changeInput(input);
         response.send();
@@ -129,7 +132,6 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
         btn: string,
         request: RouteHandlerRequest,
         response: RouteHandlerResponse,
-        next: NextFunction,
       ): Promise<void> => {
         await this.client.buttonPress(button);
         response.send();
@@ -137,38 +139,18 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
     };
   }
 
-  private async handleOn(
-    request: RouteHandlerRequest,
-    response: RouteHandlerResponse,
-    next: NextFunction,
-  ): Promise<void> {
+  private async handleOn(request: RouteHandlerRequest, response: RouteHandlerResponse): Promise<void> {
     await this.client.on();
     response.send();
   }
 
-  private async handleOff(
-    request: RouteHandlerRequest,
-    response: RouteHandlerResponse,
-    next: NextFunction,
-  ): Promise<void> {
+  private async handleOff(request: RouteHandlerRequest, response: RouteHandlerResponse): Promise<void> {
     await this.client.off();
     response.send();
   }
 
-  private async handleChangeInput(
-    request: RouteHandlerRequest,
-    response: RouteHandlerResponse,
-    next: NextFunction,
-  ): Promise<void> {
+  private async handleChangeInput(request: RouteHandlerRequest): Promise<void> {
     const input = request.parameters.input;
     await this.client.changeInput(input);
-  }
-}
-
-export namespace EpsonNetworkRS232Projector {
-  export enum PowerState {
-    ON = 'ON',
-    OFF = 'OFF',
-    UNKNOWN = 'UNKNOWN',
   }
 }

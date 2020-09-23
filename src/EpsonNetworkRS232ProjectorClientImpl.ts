@@ -87,7 +87,7 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
   }
 
   private sleep(time: number): Promise<void> {
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve) => {
       setTimeout(() => {
         resolve();
       }, time);
