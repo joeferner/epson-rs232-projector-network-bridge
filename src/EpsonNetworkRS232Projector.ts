@@ -12,8 +12,13 @@ import { EpsonNetworkRS232ProjectorClientImpl } from './EpsonNetworkRS232Project
 import { EpsonNetworkRS232ProjectorClientMock } from './EpsonNetworkRS232ProjectorClientMock';
 import { EpsonNetworkRS232ProjectorClient } from './EpsonNetworkRS232ProjectorClient';
 import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
-import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232ProjectorClientInput';
-import { EpsonNetworkRS232ProjectorPowerState } from './EpsonNetworkRS232ProjectorPowerState';
+import {
+  EpsonNetworkRS232ProjectorClientInput,
+  epsonNetworkRS232ProjectorClientInputToStatusString,
+  parseEpsonNetworkRS232ProjectorClientInput,
+} from './EpsonNetworkRS232ProjectorClientInput';
+import { EpsonNetworkRS232ProjectorStatus } from './EpsonNetworkRS232ProjectorStatus';
+import { PowerStatus } from '@unisonht/unisonht';
 
 export interface EpsonNetworkRS232ProjectorOptions {
   useMockClient?: boolean;
@@ -49,9 +54,11 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
     await this.client.start();
   }
 
-  public async getStatus(): Promise<DeviceStatus> {
+  public async getStatus(): Promise<EpsonNetworkRS232ProjectorStatus> {
     const powerState = await this.client.getPowerState();
-    const input = powerState === EpsonNetworkRS232ProjectorPowerState.ON ? await this.client.getInput() : undefined;
+    const input: string = epsonNetworkRS232ProjectorClientInputToStatusString(
+      powerState === PowerStatus.ON ? await this.client.getInput() : undefined,
+    );
     return {
       power: powerState,
       input,
@@ -144,7 +151,7 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
   }
 
   private async handleChangeInput(request: RouteHandlerRequest, response: RouteHandlerResponse): Promise<void> {
-    const input = parseInt(request.parameters.input, 16);
+    const input = parseEpsonNetworkRS232ProjectorClientInput(request.parameters.input);
     await this.client.changeInput(input);
     response.send();
   }

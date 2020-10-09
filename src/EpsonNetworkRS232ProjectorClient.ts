@@ -1,6 +1,6 @@
-import { EpsonNetworkRS232ProjectorPowerState } from './index';
 import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
 import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232ProjectorClientInput';
+import { PowerStatus } from '@unisonht/unisonht';
 
 export interface EpsonNetworkRS232ProjectorClient {
   start(): Promise<void>;
@@ -15,5 +15,5 @@ export interface EpsonNetworkRS232ProjectorClient {
 
   getInput(): Promise<EpsonNetworkRS232ProjectorClientInput>;
 
-  getPowerState(): Promise<EpsonNetworkRS232ProjectorPowerState>;
+  getPowerState(): Promise<PowerStatus>;
 }

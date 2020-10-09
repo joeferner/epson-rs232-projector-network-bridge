@@ -1,5 +1,5 @@
 import { EpsonNetworkRS232ProjectorClient } from './EpsonNetworkRS232ProjectorClient';
-import { EpsonNetworkRS232ProjectorPowerState } from './index';
+import { PowerStatus } from '@unisonht/unisonht';
 import Debug from 'debug';
 import { EpsonNetworkRS232ProjectorClientButton } from './EpsonNetworkRS232ProjectorClientButton';
 import { EpsonNetworkRS232ProjectorClientInput } from './EpsonNetworkRS232ProjectorClientInput';
@@ -8,7 +8,7 @@ const debug = Debug('EpsonNetworkRS232Projector:ClientMock');
 
 export class EpsonNetworkRS232ProjectorClientMock implements EpsonNetworkRS232ProjectorClient {
   private input: EpsonNetworkRS232ProjectorClientInput = EpsonNetworkRS232ProjectorClientInput.HDMI1;
-  private powerState: EpsonNetworkRS232ProjectorPowerState = EpsonNetworkRS232ProjectorPowerState.UNKNOWN;
+  private powerState: PowerStatus = PowerStatus.UNKNOWN;
 
   public async start(): Promise<void> {
     debug('start');
@@ -16,12 +16,12 @@ export class EpsonNetworkRS232ProjectorClientMock implements EpsonNetworkRS232Pr
 
   public async on(): Promise<void> {
     debug('on');
-    this.powerState = EpsonNetworkRS232ProjectorPowerState.ON;
+    this.powerState = PowerStatus.ON;
   }
 
   public async off(): Promise<void> {
     debug('off');
-    this.powerState = EpsonNetworkRS232ProjectorPowerState.OFF;
+    this.powerState = PowerStatus.OFF;
   }
 
   public async changeInput(input: EpsonNetworkRS232ProjectorClientInput): Promise<void> {
@@ -37,7 +37,7 @@ export class EpsonNetworkRS232ProjectorClientMock implements EpsonNetworkRS232Pr
     return this.input;
   }
 
-  public async getPowerState(): Promise<EpsonNetworkRS232ProjectorPowerState> {
+  public async getPowerState(): Promise<PowerStatus> {
     return this.powerState;
   }
 }

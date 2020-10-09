@@ -4,4 +4,4 @@ export * from './EpsonNetworkRS232ProjectorClientImpl';
 export * from './EpsonNetworkRS232ProjectorClientMock';
 export * from './EpsonNetworkRS232ProjectorClientButton';
 export * from './EpsonNetworkRS232ProjectorClientInput';
-export * from './EpsonNetworkRS232ProjectorPowerState';
+export * from './EpsonNetworkRS232ProjectorStatus';
