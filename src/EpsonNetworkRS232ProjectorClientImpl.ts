@@ -80,6 +80,7 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
       if (currentInput === input) {
         return;
       }
+      debug(`currentInput: ${currentInput} ${typeof currentInput} !== targetInput: ${input} ${typeof input}`);
       await this.writeCommand(`SOURCE ${input.toString(16)}`, TIMEOUT_SHORT, false);
       await this.sleep(TIMEOUT_SHORT);
     }

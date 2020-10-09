@@ -143,8 +143,9 @@ export class EpsonNetworkRS232Projector implements UnisonHTDevice {
     response.send();
   }
 
-  private async handleChangeInput(request: RouteHandlerRequest): Promise<void> {
-    const input = request.parameters.input;
+  private async handleChangeInput(request: RouteHandlerRequest, response: RouteHandlerResponse): Promise<void> {
+    const input = parseInt(request.parameters.input, 16);
     await this.client.changeInput(input);
+    response.send();
   }
 }
