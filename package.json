@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/joeferner/unisonht-epson-network-rs232-projector#readme",
   "dependencies": {
-    "axios": "0.20.x",
+    "axios": "0.21.x",
     "debug": "4.2.x",
     "@unisonht/unisonht": "0.0.x"
   },
