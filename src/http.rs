@@ -26,7 +26,7 @@ pub async fn http_start_server() -> Result<()> {
         .route("/docs", get(handle_get_docs))
         .merge(SwaggerUi::new("/docs/swagger-ui").url("/docs/openapi.json", ApiDoc::openapi()));
 
-    info!("listening http://localhost:8080/docs/openapi.json");
+    info!("listening http://localhost:8080/docs");
     axum::serve(listener, app.into_make_service())
         .await
         .context("serving")
