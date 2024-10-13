@@ -11,19 +11,24 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    routes::{self, get_status::get_status, post_source::post_source},
+    routes::{self, get_status::get_status, post_power::post_power, post_source::post_source},
     state::EpsonState,
 };
 
 #[derive(OpenApi)]
 #[openapi(
     info(title = "unisonht-epson-network-rs232-projector"),
-    paths(routes::get_status::get_status, routes::post_source::post_source),
+    paths(
+        routes::get_status::get_status,
+        routes::post_source::post_source,
+        routes::post_power::post_power
+    ),
     components(schemas(
         routes::ErrorResponse,
         routes::EmptyResponse,
         routes::get_status::GetStatusResponse,
-        routes::post_source::PostSourceRequest
+        routes::post_source::PostSourceRequest,
+        routes::post_power::PostPowerRequest,
     ))
 )]
 struct ApiDoc;
@@ -36,7 +41,8 @@ pub async fn http_start_server(state: Arc<EpsonState>) -> Result<()> {
 
     let app = axum::Router::new()
         .route("/api/v1/status", get(get_status))
-        .route("/api/v1/source", post(post_source));
+        .route("/api/v1/source", post(post_source))
+        .route("/api/v1/power", post(post_power));
 
     let app = app
         .route("/docs", get(handle_get_docs))

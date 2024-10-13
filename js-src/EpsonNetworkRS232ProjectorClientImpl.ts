@@ -51,19 +51,6 @@ export class EpsonNetworkRS232ProjectorClientImpl implements EpsonNetworkRS232Pr
     }
   }
 
-  public async changeInput(input: EpsonNetworkRS232ProjectorClientInput): Promise<void> {
-    for (let retryCount = 0; retryCount < 3; retryCount++) {
-      const currentInput = await this.getInput();
-      if (currentInput === input) {
-        return;
-      }
-      debug(`currentInput: ${currentInput} ${typeof currentInput} !== targetInput: ${input} ${typeof input}`);
-      await this.writeCommand(`SOURCE ${input.toString(16)}`, TIMEOUT_SHORT, false);
-      await this.sleep(TIMEOUT_SHORT);
-    }
-    throw new Error('failed to set input');
-  }
-
   public async buttonPress(button: EpsonNetworkRS232ProjectorClientButton): Promise<void> {
     await this.writeCommand(`KEY ${button.toString(16)}`);
   }

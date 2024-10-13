@@ -20,6 +20,13 @@ pub struct EpsonSerialPort {
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema, FromPrimitive, ToPrimitive)]
 #[serde(rename_all = "camelCase")]
+pub enum Power {
+    On,
+    Off,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, ToSchema, FromPrimitive, ToPrimitive)]
+#[serde(rename_all = "camelCase")]
 pub enum PowerStatus {
     StandbyModeNetworkOff = 0x00,
     LampOn = 0x01,
@@ -63,7 +70,14 @@ impl EpsonSerialPort {
 
     pub async fn get_power_status(&self) -> Result<PowerStatus> {
         let mut port = self.port.write().await;
-        let resp = write_command(&mut port, "PWR?", self.read_timeout).await?;
+        self._get_power_status(&mut port).await
+    }
+
+    async fn _get_power_status(
+        &self,
+        port: &mut Framed<SerialStream, LinesCodec>,
+    ) -> Result<PowerStatus> {
+        let resp = write_command(port, "PWR?", self.read_timeout).await?;
         if !resp.starts_with("PWR=") {
             return Err(anyhow!("invalid power response {resp}"));
         }
@@ -95,19 +109,47 @@ impl EpsonSerialPort {
         }
     }
 
-    pub async fn set_source(&self, source: Source) -> Result<()> {
-        let source_value = source
+    pub async fn set_source(&self, target_source: Source) -> Result<()> {
+        let source_value = target_source
             .to_u8()
-            .ok_or(anyhow!("invalid source: {source:?}"))?;
+            .ok_or(anyhow!("invalid source: {target_source:?}"))?;
         let cmd = format!("SOURCE {:02x}", source_value);
 
         let mut port = self.port.write().await;
         for _ in 0..3 {
             let current_source = self._get_source(&mut port).await?;
-            if current_source == source {
+            if current_source == target_source {
                 return Ok(());
             }
             write_command(&mut port, &cmd, self.read_timeout).await?;
+            sleep(self.read_timeout).await;
+        }
+
+        Err(anyhow!("failed to set source"))
+    }
+
+    pub async fn set_power(&self, target_power: Power) -> Result<()> {
+        let cmd = match target_power {
+            Power::On => "PWR ON",
+            Power::Off => "PWR OFF",
+        };
+
+        let mut port = self.port.write().await;
+        for _ in 0..3 {
+            let current_power = self._get_power_status(&mut port).await?;
+            match target_power {
+                Power::On => match current_power {
+                    PowerStatus::LampOn => return Ok(()),
+                    PowerStatus::Warmup => return Ok(()),
+                    _ => {}
+                },
+                Power::Off => {
+                    if let PowerStatus::StandbyModeNetworkOff = current_power {
+                        return Ok(());
+                    }
+                }
+            }
+            write_command(&mut port, cmd, self.read_timeout).await?;
             sleep(self.read_timeout).await;
         }
 
