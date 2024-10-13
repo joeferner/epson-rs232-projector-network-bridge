@@ -10,19 +10,26 @@ use tokio::net::TcpListener;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::state::State;
+use crate::{
+    routes::{self, get_power_status::get_power_status},
+    state::EpsonState,
+};
 
 #[derive(OpenApi)]
-#[openapi(info(title = "unisonht-epson-network-rs232-projector"))]
+#[openapi(
+    info(title = "unisonht-epson-network-rs232-projector"),
+    paths(routes::get_power_status::get_power_status),
+    components(schemas(routes::ErrorResponse, routes::get_power_status::PowerStatusResponse))
+)]
 struct ApiDoc;
 
-pub async fn http_start_server(state: Arc<State>) -> Result<()> {
+pub async fn http_start_server(state: Arc<EpsonState>) -> Result<()> {
     let socket_address: SocketAddr = "0.0.0.0:8080".parse().context("parse socket addr")?;
     let listener = TcpListener::bind(socket_address)
         .await
         .context(format!("binding to {socket_address}"))?;
 
-    let app = axum::Router::new();
+    let app = axum::Router::new().route("/api/v1/power", get(get_power_status));
 
     let app = app
         .route("/docs", get(handle_get_docs))

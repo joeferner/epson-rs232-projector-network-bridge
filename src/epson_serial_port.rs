@@ -3,9 +3,11 @@ use std::time::Duration;
 use anyhow::{anyhow, Context, Result};
 use futures::{sink::SinkExt, StreamExt};
 use log::{debug, info};
+use serde::{Deserialize, Serialize};
 use tokio::{sync::RwLock, time::sleep};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
 use tokio_util::codec::{Decoder, Framed, LinesCodec};
+use utoipa::ToSchema;
 
 use crate::config::Config;
 
@@ -14,7 +16,8 @@ pub struct EpsonSerialPort {
     port: RwLock<Framed<SerialStream, LinesCodec>>,
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub enum PowerStatus {
     On,
     Off,

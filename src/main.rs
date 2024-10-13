@@ -6,13 +6,13 @@ use epson_serial_port::EpsonSerialPort;
 use http::http_start_server;
 use log::info;
 use logger::init_logger;
-use state::State;
-use tokio::sync::RwLock;
+use state::EpsonState;
 
 mod config;
 mod epson_serial_port;
 mod http;
 mod logger;
+mod routes;
 mod state;
 
 #[tokio::main]
@@ -27,9 +27,7 @@ async fn main() -> Result<()> {
         epson.get_power_status().await?
     );
 
-    let state = Arc::new(State {
-        epson: RwLock::new(epson),
-    });
+    let state = Arc::new(EpsonState { epson });
 
     http_start_server(state).await?;
     Ok(())
