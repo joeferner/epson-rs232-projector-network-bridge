@@ -6,25 +6,29 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::ErrorResponse;
-use crate::{epson_serial_port::PowerStatus, state::EpsonState};
+use crate::{
+    epson_serial_port::{PowerStatus, Source},
+    state::EpsonState,
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct PowerStatusResponse {
+pub struct GetStatusResponse {
     status: PowerStatus,
+    source: Source,
 }
 
 #[utoipa::path(
-    operation_id = "getPowerStatus",
+    operation_id = "getStatus",
     get,
-    path = "/api/v1/power",
+    path = "/api/v1/status",
     responses(
-        (status = 200, description = "current power status", body = PowerStatusResponse),
+        (status = 200, description = "current status", body = PowerStatusResponse),
         (status = 500, description = "error", body = ErrorResponse)
     )
 )]
-pub async fn get_power_status(State(state): State<Arc<EpsonState>>) -> impl IntoResponse {
-    match _get_power_status(state).await {
+pub async fn get_status(State(state): State<Arc<EpsonState>>) -> impl IntoResponse {
+    match _get_status(state).await {
         Ok(resp) => Json(resp).into_response(),
         Err(e) => Json(ErrorResponse {
             message: format!("{e}"),
@@ -33,8 +37,9 @@ pub async fn get_power_status(State(state): State<Arc<EpsonState>>) -> impl Into
     }
 }
 
-async fn _get_power_status(state: Arc<EpsonState>) -> Result<PowerStatusResponse> {
+async fn _get_status(state: Arc<EpsonState>) -> Result<GetStatusResponse> {
     let status = state.epson.get_power_status().await?;
+    let source = state.epson.get_source().await?;
 
-    Ok(PowerStatusResponse { status })
+    Ok(GetStatusResponse { status, source })
 }

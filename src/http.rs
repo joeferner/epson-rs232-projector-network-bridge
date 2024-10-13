@@ -3,7 +3,7 @@ use std::{net::SocketAddr, sync::Arc};
 use anyhow::{Context, Result};
 use axum::{
     response::{Html, IntoResponse},
-    routing::get,
+    routing::{get, post},
 };
 use log::info;
 use tokio::net::TcpListener;
@@ -11,15 +11,20 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    routes::{self, get_power_status::get_power_status},
+    routes::{self, get_status::get_status, post_source::post_source},
     state::EpsonState,
 };
 
 #[derive(OpenApi)]
 #[openapi(
     info(title = "unisonht-epson-network-rs232-projector"),
-    paths(routes::get_power_status::get_power_status),
-    components(schemas(routes::ErrorResponse, routes::get_power_status::PowerStatusResponse))
+    paths(routes::get_status::get_status, routes::post_source::post_source),
+    components(schemas(
+        routes::ErrorResponse,
+        routes::EmptyResponse,
+        routes::get_status::GetStatusResponse,
+        routes::post_source::PostSourceRequest
+    ))
 )]
 struct ApiDoc;
 
@@ -29,7 +34,9 @@ pub async fn http_start_server(state: Arc<EpsonState>) -> Result<()> {
         .await
         .context(format!("binding to {socket_address}"))?;
 
-    let app = axum::Router::new().route("/api/v1/power", get(get_power_status));
+    let app = axum::Router::new()
+        .route("/api/v1/status", get(get_status))
+        .route("/api/v1/source", post(post_source));
 
     let app = app
         .route("/docs", get(handle_get_docs))

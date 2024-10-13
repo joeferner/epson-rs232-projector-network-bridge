@@ -1,3 +1,7 @@
+# Supports
+
+- Epson 5030UB 2D/3D 1080p 3LCD Projector
+
 # Mock serial port
 
 ```
