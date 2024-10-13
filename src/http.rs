@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::{Context, Result};
 use axum::{
@@ -10,11 +10,13 @@ use tokio::net::TcpListener;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+use crate::state::State;
+
 #[derive(OpenApi)]
 #[openapi(info(title = "unisonht-epson-network-rs232-projector"))]
 struct ApiDoc;
 
-pub async fn http_start_server() -> Result<()> {
+pub async fn http_start_server(state: Arc<State>) -> Result<()> {
     let socket_address: SocketAddr = "0.0.0.0:8080".parse().context("parse socket addr")?;
     let listener = TcpListener::bind(socket_address)
         .await
@@ -24,7 +26,8 @@ pub async fn http_start_server() -> Result<()> {
 
     let app = app
         .route("/docs", get(handle_get_docs))
-        .merge(SwaggerUi::new("/docs/swagger-ui").url("/docs/openapi.json", ApiDoc::openapi()));
+        .merge(SwaggerUi::new("/docs/swagger-ui").url("/docs/openapi.json", ApiDoc::openapi()))
+        .with_state(state);
 
     info!("listening http://localhost:8080/docs");
     axum::serve(listener, app.into_make_service())

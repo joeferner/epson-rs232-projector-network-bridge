@@ -1,3 +1,12 @@
+# Mock serial port
+
+```
+terminal1> socat -d -d pty,raw,echo=0 pty,raw,echo=0
+terminal2> LOG_LEVEL=debug TIMEOUT=30 SERIAL_PORT=/dev/pts/3 cargo run
+terminal3> cat < /dev/pts/2
+terminal3> printf "PWR=00\r\n" > /dev/pts/2
+```
+
 # Setup Raspberry Pi
 
 1. Install the latest Raspberry Pi image to SD Card
