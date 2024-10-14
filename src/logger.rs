@@ -4,13 +4,11 @@ use log4rs::{
     config::{Appender, Root},
 };
 
-use crate::config::Config;
-
-pub fn init_logger(config: &Config) -> Result<()> {
+pub fn init_logger(log_level: log::LevelFilter) -> Result<()> {
     let stdout = ConsoleAppender::builder().build();
     let config = log4rs::Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(config.log_level))
+        .build(Root::builder().appender("stdout").build(log_level))
         .unwrap();
     log4rs::init_config(config).context("failed to initialize default logger")?;
 

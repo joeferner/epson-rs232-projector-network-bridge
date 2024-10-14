@@ -6,6 +6,7 @@ cd "${DIR}/.."
 function update {
   sudo apt -y update
   sudo apt -y upgrade
+  sudo apt-get install -y libudev-dev
   sudo apt-get autoremove
 }
 

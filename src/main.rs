@@ -5,7 +5,6 @@ use config::Config;
 use epson_serial_port::EpsonSerialPort;
 use http::http_start_server;
 use log::info;
-use logger::init_logger;
 use state::EpsonState;
 
 mod config;
@@ -18,7 +17,6 @@ mod state;
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::new()?;
-    init_logger(&config)?;
     info!("starting unisonht-epson-network-rs232-projector");
 
     let epson = EpsonSerialPort::new(&config)?;

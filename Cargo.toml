@@ -16,7 +16,8 @@ serde = "1.0.210"
 serde_json = "1.0.128"
 serde_yml = "0.0.12"
 tokio = { version = "1.40.0", features = ["full"] }
-tokio-serial = "5.4.4"
+tokio-serial = { version = "5.4.4", features = ["libudev"] }
 tokio-util = { version = "0.7.12", features = ["codec"] }
 utoipa = { version = "4.2.3", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "7.1.0", features = ["axum"] }
+serialport = { version = "*", features = ["usbportinfo-interface"] }
