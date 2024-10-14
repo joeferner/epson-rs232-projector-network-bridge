@@ -1,0 +1,13 @@
+[Unit]
+Description=UnisonHT Epson Network RS232 Projector
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/usr/sbin/unisonht-epson-network-rs232-projector
+
+[Install]
+WantedBy=multi-user.target

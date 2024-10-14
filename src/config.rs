@@ -1,8 +1,8 @@
 use std::{env, str::FromStr, time::Duration};
 
+use crate::logger::init_logger;
 use anyhow::{anyhow, Context, Result};
 use log::{debug, info};
-use crate::logger::init_logger;
 
 pub struct Config {
     pub serial_port: String,
@@ -35,9 +35,23 @@ fn find_serial_port() -> Result<String> {
     }
 
     debug!("SERIAL_PORT environment variable not set, searching for serial port");
+    let mut found_port = None;
     let available_ports = serialport::available_ports()?;
     for available_port in available_ports {
-        info!("available_port: {available_port:?}");
+        debug!("available_port: {available_port:?}");
+        if available_port.port_name == "/dev/ttyAMA0" {
+            continue;
+        }
+        if found_port.is_some() {
+            return Err(anyhow!(
+                "SERIAL_PORT not set and multiple serial ports were found"
+            ));
+        }
+        found_port = Some(available_port.port_name);
+    }
+
+    if let Some(found_port) = found_port {
+        return Ok(found_port);
     }
 
     Err(anyhow!(

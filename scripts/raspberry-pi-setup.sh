@@ -38,9 +38,18 @@ function rust_setup {
   echo "rust setup complete"
 }
 
+function service_setup {
+  echo "setup service..."
+  sudo cp scripts/unisonht-epson-projector.service /etc/systemd/system/
+  sudo systemctl enable unisonht-epson-projector.service
+  sudo systemctl start unisonht-epson-projector.service
+  echo "service setup complete"
+}
+
 update
 dev_setup
 rust_setup
+service_setup
 echo ""
 echo "Setup complete"
 echo ""
