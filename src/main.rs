@@ -19,12 +19,7 @@ async fn main() -> Result<()> {
     let config = Config::new()?;
     info!("starting unisonht-epson-network-rs232-projector");
 
-    let epson = EpsonSerialPort::new(&config)?;
-    info!(
-        "current power status: {:?}",
-        epson.get_power_status().await?
-    );
-
+    let epson = EpsonSerialPort::new(&config).await?;
     let state = Arc::new(EpsonState { epson });
 
     http_start_server(state).await?;

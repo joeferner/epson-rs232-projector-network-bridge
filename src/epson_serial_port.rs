@@ -52,7 +52,7 @@ pub enum Source {
 }
 
 impl EpsonSerialPort {
-    pub fn new(config: &Config) -> Result<Self> {
+    pub async fn new(config: &Config) -> Result<Self> {
         info!("opening serial port {} 9600 8N1", &config.serial_port);
         let port = tokio_serial::new(&config.serial_port, 9600)
             .data_bits(tokio_serial::DataBits::Eight)
@@ -60,7 +60,7 @@ impl EpsonSerialPort {
             .stop_bits(tokio_serial::StopBits::One)
             .open_native_async()
             .context(format!("failed to open serial port {}", config.serial_port))?;
-        let port = LinesCodec::new().framed(port);
+        let mut port = LinesCodec::new().framed(port);
 
         Ok(EpsonSerialPort {
             read_timeout: config.read_timeout,
@@ -165,7 +165,7 @@ async fn write_command(
     debug!("sending command {cmd}");
     let cmd_data = cmd.to_string() + "\r\n";
 
-    clear_port(port).await?;
+    // clear_port(port).await?;
     port.send(cmd_data).await?;
 
     tokio::select! {

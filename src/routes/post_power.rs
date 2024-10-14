@@ -4,6 +4,7 @@ use anyhow::Result;
 use axum::{extract::State, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use log::error;
 
 use super::{EmptyResponse, ErrorResponse};
 use crate::{epson_serial_port::Power, state::EpsonState};
@@ -29,10 +30,12 @@ pub async fn post_power(
 ) -> impl IntoResponse {
     match _post_power(state, req.power).await {
         Ok(_) => Json(EmptyResponse::new()).into_response(),
-        Err(e) => Json(ErrorResponse {
-            message: format!("{e}"),
-        })
-        .into_response(),
+        Err(e) => {
+            error!("failed to set power; error = {e}");
+            Json(ErrorResponse {
+                message: format!("{e}"),
+            }).into_response()
+        },
     }
 }
 

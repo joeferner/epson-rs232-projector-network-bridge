@@ -4,6 +4,7 @@ use anyhow::Result;
 use axum::{extract::State, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use log::error;
 
 use super::ErrorResponse;
 use crate::{
@@ -23,17 +24,19 @@ pub struct GetStatusResponse {
     get,
     path = "/api/v1/status",
     responses(
-        (status = 200, description = "current status", body = PowerStatusResponse),
+        (status = 200, description = "current status", body = GetStatusResponse),
         (status = 500, description = "error", body = ErrorResponse)
     )
 )]
 pub async fn get_status(State(state): State<Arc<EpsonState>>) -> impl IntoResponse {
     match _get_status(state).await {
         Ok(resp) => Json(resp).into_response(),
-        Err(e) => Json(ErrorResponse {
-            message: format!("{e}"),
-        })
-        .into_response(),
+        Err(e) => {
+            error!("failed to get status; error = {e}");
+            Json(ErrorResponse {
+                message: format!("{e}"),
+            }).into_response()
+        },
     }
 }
 

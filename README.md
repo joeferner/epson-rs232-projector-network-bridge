@@ -34,7 +34,7 @@ terminal3> printf "PWR=00\r\n" > /dev/pts/2
 
 1. Install "Remote Development" extension pack for VSCode.
 1. Connect VSCode via ssh (Ctrl+Shift+P -> Remote-SSH: Connect to Host...) `<username>@epson.local`
-1. Run `LOG_LEVEL=debug cargo run`
+1. Run `RUST_BACKTRACE=1 LOG_LEVEL=debug cargo run`
 
 
 1. Fix the time
