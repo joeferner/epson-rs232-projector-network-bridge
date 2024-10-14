@@ -165,8 +165,7 @@ async fn write_command(
     debug!("sending command {cmd}");
     let cmd_data = cmd.to_string() + "\r\n";
 
-    port.read_buffer_mut().clear();
-    port.get_ref().clear(ClearBuffer::All)?;
+    clear_port(port).await?;
     port.send(cmd_data).await?;
 
     tokio::select! {
@@ -183,4 +182,10 @@ async fn write_command(
             Err(anyhow!("timeout waiting for response to command {}", cmd))
         }
     }
+}
+
+async fn clear_port(port: &mut Framed<SerialStream, LinesCodec>) -> Result<()> {
+    port.read_buffer_mut().clear();
+    port.get_ref().clear(ClearBuffer::All)?;
+    Ok(())
 }
