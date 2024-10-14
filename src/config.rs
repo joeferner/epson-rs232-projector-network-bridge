@@ -12,7 +12,7 @@ pub struct Config {
 impl Config {
     pub fn new() -> Result<Config> {
         let log_level = env::var("LOG_LEVEL").unwrap_or("info".to_string());
-        let timeout = env::var("TIMEOUT").unwrap_or("1".to_string());
+        let timeout = env::var("TIMEOUT").unwrap_or("3".to_string());
         let timeout = timeout
             .parse::<u64>()
             .context(format!("invalid TIMEOUT {timeout}"))?;
