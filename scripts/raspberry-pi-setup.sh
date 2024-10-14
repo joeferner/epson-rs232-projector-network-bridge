@@ -6,6 +6,7 @@ cd "${DIR}/.."
 function update {
   sudo apt -y update
   sudo apt -y upgrade
+  sudo apt-get autoremove
 }
 
 function dev_setup {
@@ -36,20 +37,10 @@ function rust_setup {
   echo "rust setup complete"
 }
 
-function readonlyfs_setup {
-  echo "setup read only fs..."
-  sudo raspi-config nonint enable_overlayfs
-  echo "read only fs setup complete..."
-}
-
 update
 dev_setup
 rust_setup
-readonlyfs_setup
 echo ""
 echo "Setup complete"
 echo ""
 echo "You may need to reboot to finish setup"
-echo ""
-echo "To disable readonly filesystem run: sudo raspi-config nonint disable_overlayfs"
-echo ""
