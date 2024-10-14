@@ -7,7 +7,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use serde::{Deserialize, Serialize};
 use tokio::{sync::RwLock, time::sleep};
-use tokio_serial::{SerialPortBuilderExt, SerialStream};
+use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt, SerialStream};
 use tokio_util::codec::{Decoder, Framed, LinesCodec};
 use utoipa::ToSchema;
 
@@ -165,6 +165,8 @@ async fn write_command(
     debug!("sending command {cmd}");
     let cmd_data = cmd.to_string() + "\r\n";
 
+    port.read_buffer_mut().clear();
+    port.get_ref().clear(ClearBuffer::All)?;
     port.send(cmd_data).await?;
 
     tokio::select! {
