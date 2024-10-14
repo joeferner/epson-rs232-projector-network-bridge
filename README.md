@@ -13,23 +13,28 @@ terminal3> printf "PWR=00\r\n" > /dev/pts/2
 
 # Setup Raspberry Pi
 
-1. Install the latest Raspberry Pi image to SD Card
-1. Create a file in the boot partition called `ssh`
-1. Update packages
+1. Install rpi-imager locally
+1. Edit Settings
+   - hostname: epson
+   - set username/password
+   - (optional) configure wireless lan
+   - set locale settings
+   - enable ssh
+1.  Start the Raspberry Pi, open a command prompt and `ping epson.local`
+1.  Open a terminal
 
-   sudo apt-get update
-   sudo apt-get upgrade
-   sudo apt-get autoremove
-   sudo reboot
+        ssh <username>@epson.local
+        sudo apt -y install git
+        # copy id_rsa from host computer
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keygen -p -f ~/.ssh/id_rsa # remove password
+        git clone git@github.com:joeferner/unisonht-epson-network-rs232-projector.git
+        ./unisonht-epson-network-rs232-projector/scripts/raspberry-pi-setup.sh
 
-1. Create a new user
-   1. `sudo adduser epson`
-   1. Add to sudo `sudo visudo` add the line `epson ALL=(ALL) NOPASSWD:ALL`
-   1. Remove old user `sudo deluser pi`
-   1. Enable password less ssh
-      1. `mkdir .ssh`
-      1. Copy contents of local `~/.ssh/id_rsa.pub` to pi `~/.ssh/authorized_keys`
-      1. Fix permissions `chmod 700 .ssh; chmod 640 .ssh/authorized_keys`
+1.  Install "Remote Development" extension pack for VSCode.
+1.  Connect VSCode via ssh (Ctrl+Shift+P -> Remote-SSH: Connect to Host...) `<username>@epson.local`
+
+
 1. Fix the time
 
    sudo apt-get install ntpdate
