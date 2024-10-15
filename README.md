@@ -32,16 +32,9 @@ terminal3> printf "PWR=00\r\n" > /dev/pts/2
         git clone git@github.com:joeferner/unisonht-epson-network-rs232-projector.git
         ./unisonht-epson-network-rs232-projector/scripts/raspberry-pi-setup.sh
 
+# Raspberry Pi development
+
 1. Install "Remote Development" extension pack for VSCode.
 1. Connect VSCode via ssh (Ctrl+Shift+P -> Remote-SSH: Connect to Host...) `<username>@epson.local`
+1. Stop service `sudo systemctl stop unisonht-epson-projector`
 1. Run `RUST_BACKTRACE=1 LOG_LEVEL=debug cargo run`
-
-
-TODO
-1. Change pi to readonly mode (see https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/blob/master/read-only-fs.sh)
-   1. `scp read-only-fs.sh 192.168.0.161:`
-   1. `sudo bash read-only-fs.sh`
-   1. Enable boot-time read/write jumper? `y`
-   1. GPIO pin for R/W jumper: `21`
-   1. Install GPIO-halt utility? `n`
-   1. Enable kernel panic watchdog? `y`
