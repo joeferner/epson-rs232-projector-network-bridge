@@ -31,7 +31,9 @@ impl EpsonSerialPort {
             .open_native_async()
             .context(format!("failed to open serial port {}", config.serial_port))?;
 
-        let port = EpsonCodec::new().framed(port);
+        let mut port = EpsonCodec::new().framed(port);
+
+        port.send(EpsonInput::Noop).await;
 
         Ok(EpsonSerialPort {
             read_timeout: config.read_timeout,
@@ -64,7 +66,7 @@ impl EpsonSerialPort {
         let resp = write_command(port, EpsonInput::QuerySource, self.read_timeout).await?;
         match resp {
             EpsonOutput::SourceStatus(source_status) => Ok(source_status),
-            _ => Err(anyhow!("invalid response to query power; resp = {resp:?}")),
+            _ => Err(anyhow!("invalid response to query source; resp = {resp:?}")),
         }
     }
 

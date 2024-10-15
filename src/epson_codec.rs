@@ -44,11 +44,15 @@ impl EpsonCodec {
     }
 
     fn write_line(dst: &mut BytesMut, line: &str) -> Result<()> {
-        debug!("writing line: {line}");
+        debug!("writing line: \"{line}\"");
         dst.write_str(line)
             .with_context(|| format!("failed to write {line}"))?;
         dst.write_str("\r\n")
             .with_context(|| format!("failed to write {line}; new lines"))
+    }
+
+    fn write_noop(dst: &mut BytesMut) -> Result<()> {
+        EpsonCodec::write_line(dst, "")
     }
 
     fn write_query_power(dst: &mut BytesMut) -> Result<()> {
@@ -115,6 +119,7 @@ impl Encoder<EpsonInput> for EpsonCodec {
 
     fn encode(&mut self, item: EpsonInput, dst: &mut BytesMut) -> Result<(), Self::Error> {
         match item {
+            EpsonInput::Noop => EpsonCodec::write_noop(dst),
             EpsonInput::QueryPower => EpsonCodec::write_query_power(dst),
             EpsonInput::QuerySource => EpsonCodec::write_query_source(dst),
             EpsonInput::SetPower(power) => EpsonCodec::write_set_power(dst, power),
@@ -133,6 +138,7 @@ pub enum EpsonOutput {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum EpsonInput {
+    Noop,
     QueryPower,
     QuerySource,
     SetPower(Power),
