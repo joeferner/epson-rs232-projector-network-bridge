@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::{extract::State, response::IntoResponse, Json};
+use log::error;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use log::error;
 
 use super::ErrorResponse;
 use crate::{
-    epson_serial_port::{PowerStatus, Source},
+    epson_codec::{PowerStatus, Source},
     state::EpsonState,
 };
 
@@ -35,8 +35,9 @@ pub async fn get_status(State(state): State<Arc<EpsonState>>) -> impl IntoRespon
             error!("failed to get status; error = {e}");
             Json(ErrorResponse {
                 message: format!("{e}"),
-            }).into_response()
-        },
+            })
+            .into_response()
+        }
     }
 }
 

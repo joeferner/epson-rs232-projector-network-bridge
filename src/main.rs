@@ -15,9 +15,6 @@ mod logger;
 mod routes;
 mod state;
 
-#[cfg(test)]
-mod mock_stream;
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::new()?;

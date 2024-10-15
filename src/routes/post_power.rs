@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::{extract::State, response::IntoResponse, Json};
+use log::error;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use log::error;
 
 use super::{EmptyResponse, ErrorResponse};
-use crate::{epson_serial_port::Power, state::EpsonState};
+use crate::{epson_codec::Power, state::EpsonState};
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -34,8 +34,9 @@ pub async fn post_power(
             error!("failed to set power; error = {e}");
             Json(ErrorResponse {
                 message: format!("{e}"),
-            }).into_response()
-        },
+            })
+            .into_response()
+        }
     }
 }
 

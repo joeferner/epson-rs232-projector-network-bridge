@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 pub mod get_status;
-pub mod post_source;
 pub mod post_power;
+pub mod post_source;
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
