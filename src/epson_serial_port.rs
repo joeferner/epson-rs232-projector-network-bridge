@@ -11,7 +11,7 @@ use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt, SerialStream};
 use tokio_util::codec::{Decoder, Framed, LinesCodec};
 use utoipa::ToSchema;
 
-use crate::config::Config;
+use crate::{config::Config, epson_codec::EpsonCodec};
 
 pub struct EpsonSerialPort {
     read_timeout: Duration,
@@ -60,7 +60,8 @@ impl EpsonSerialPort {
             .stop_bits(tokio_serial::StopBits::One)
             .open_native_async()
             .context(format!("failed to open serial port {}", config.serial_port))?;
-        let mut port = LinesCodec::new().framed(port);
+
+        let mut port = EpsonCodec::new().framed(port);
 
         Ok(EpsonSerialPort {
             read_timeout: config.read_timeout,
@@ -165,7 +166,7 @@ async fn write_command(
     debug!("sending command {cmd}");
     let cmd_data = cmd.to_string() + "\r\n";
 
-    // clear_port(port).await?;
+    clear_port(port).await?;
     port.send(cmd_data).await?;
 
     tokio::select! {

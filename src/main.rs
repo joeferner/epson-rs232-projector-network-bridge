@@ -8,11 +8,15 @@ use log::info;
 use state::EpsonState;
 
 mod config;
+mod epson_codec;
 mod epson_serial_port;
 mod http;
 mod logger;
 mod routes;
 mod state;
+
+#[cfg(test)]
+mod mock_stream;
 
 #[tokio::main]
 async fn main() -> Result<()> {
