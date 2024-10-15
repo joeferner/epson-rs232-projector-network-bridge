@@ -90,7 +90,9 @@ impl Decoder for EpsonCodec {
                 line.advance(b":".len());
             }
             debug!("received line {line:?}");
-            if line.starts_with(b"PWR=") {
+            if line == "ERR" {
+                Ok(Some(EpsonOutput::Error))
+            } else if line.starts_with(b"PWR=") {
                 Ok(Some(EpsonCodec::parse_power_status(&mut line)?))
             } else if line.starts_with(b"SOURCE=") {
                 Ok(Some(EpsonCodec::parse_source_status(&mut line)?))
@@ -123,6 +125,7 @@ impl Encoder<EpsonInput> for EpsonCodec {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum EpsonOutput {
+    Error,
     InvalidLine(String),
     PowerStatus(PowerStatus),
     SourceStatus(Source),
