@@ -173,6 +173,19 @@ pub enum Power {
     Off,
 }
 
+impl From<PowerStatus> for Power{
+    fn from(value: PowerStatus) -> Self {
+        match value {
+            PowerStatus::StandbyModeNetworkOff => Power::Off,
+            PowerStatus::LampOn => Power::On,
+            PowerStatus::Warmup => Power::On,
+            PowerStatus::CoolDown => Power::Off,
+            PowerStatus::AbnormalityStandby => Power::Off,
+            PowerStatus::WirelessHdStandby => Power::Off,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use futures::{FutureExt, SinkExt, StreamExt};

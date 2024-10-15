@@ -90,18 +90,9 @@ impl EpsonSerialPort {
     pub async fn set_power(&self, target_power: Power) -> Result<()> {
         let mut port = self.port.write().await;
         for _ in 0..3 {
-            let current_power = self._get_power_status(&mut port).await?;
-            match target_power {
-                Power::On => match current_power {
-                    PowerStatus::LampOn => return Ok(()),
-                    PowerStatus::Warmup => return Ok(()),
-                    _ => {}
-                },
-                Power::Off => {
-                    if let PowerStatus::StandbyModeNetworkOff = current_power {
-                        return Ok(());
-                    }
-                }
+            let current_power: Power = self._get_power_status(&mut port).await?.into();
+            if current_power == target_power {
+                return Ok(());
             }
             write_command(
                 &mut port,
