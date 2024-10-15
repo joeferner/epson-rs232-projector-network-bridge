@@ -8,15 +8,16 @@ use utoipa::ToSchema;
 
 use super::ErrorResponse;
 use crate::{
-    epson_codec::{PowerStatus, Source},
+    epson_codec::{Power, PowerStatus, Source},
     state::EpsonState,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct GetStatusResponse {
-    status: PowerStatus,
-    source: Source,
+    power_status: PowerStatus,
+    power: Power,
+    source: Option<Source>,
 }
 
 #[utoipa::path(
@@ -42,8 +43,17 @@ pub async fn get_status(State(state): State<Arc<EpsonState>>) -> impl IntoRespon
 }
 
 async fn _get_status(state: Arc<EpsonState>) -> Result<GetStatusResponse> {
-    let status = state.epson.get_power_status().await?;
-    let source = state.epson.get_source().await?;
+    let power_status = state.epson.get_power_status().await?;
+    let power: Power = power_status.clone().into();
+    let source = if power == Power::On {
+        Some(state.epson.get_source().await?)
+    } else {
+        None
+    };
 
-    Ok(GetStatusResponse { status, source })
+    Ok(GetStatusResponse {
+        power_status,
+        power,
+        source,
+    })
 }

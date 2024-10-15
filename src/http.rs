@@ -8,6 +8,7 @@ use axum::{
 use log::info;
 use tokio::net::TcpListener;
 use utoipa::OpenApi;
+use utoipa_redoc::{Redoc, Servable as RedocServable};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
@@ -47,6 +48,7 @@ pub async fn http_start_server(state: Arc<EpsonState>) -> Result<()> {
     let app = app
         .route("/docs", get(handle_get_docs))
         .merge(SwaggerUi::new("/docs/swagger-ui").url("/docs/openapi.json", ApiDoc::openapi()))
+        .merge(Redoc::with_url("/docs/redoc", ApiDoc::openapi()))
         .with_state(state);
 
     info!("listening http://localhost:8080/docs");
@@ -65,6 +67,7 @@ async fn handle_get_docs() -> impl IntoResponse {
             <ul>
                 <li><a href="/docs/openapi.json">openapi.json</a></li>
                 <li><a href="/docs/swagger-ui">swagger-ui</a></li>
+                <li><a href="/docs/redoc">redoc</a></li>
             </ul>
         </body>
     </html>"#,

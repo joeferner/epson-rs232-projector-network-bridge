@@ -20,5 +20,6 @@ tokio-serial = { version = "5.4.4", features = ["libudev"] }
 tokio-util = { version = "0.7.12", features = ["codec"] }
 utoipa = { version = "4.2.3", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "7.1.0", features = ["axum"] }
+utoipa-redoc = { version = "4.0.0", features = ["axum"] }
 serialport = { version = "*", features = ["usbportinfo-interface"] }
 tokio-stream = "0.1.16"
