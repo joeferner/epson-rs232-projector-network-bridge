@@ -33,7 +33,7 @@ impl EpsonSerialPort {
 
         let mut port = EpsonCodec::new().framed(port);
 
-        port.send(EpsonInput::Noop).await;
+        port.send(EpsonInput::Noop).await?;
 
         Ok(EpsonSerialPort {
             read_timeout: config.read_timeout,
