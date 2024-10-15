@@ -30,6 +30,9 @@ use crate::{
         routes::get_status::GetStatusResponse,
         routes::post_source::PostSourceRequest,
         routes::post_power::PostPowerRequest,
+        super::epson_codec::Power,
+        super::epson_codec::PowerStatus,
+        super::epson_codec::Source,
     ))
 )]
 struct ApiDoc;
