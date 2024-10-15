@@ -16,7 +16,7 @@ impl Config {
         let log_level = log::LevelFilter::from_str(&log_level)?;
         init_logger(log_level)?;
 
-        let http_port= env::var("HTTP_PORT").unwrap_or("8080".to_string());
+        let http_port = env::var("HTTP_PORT").unwrap_or("8080".to_string());
         let http_port = http_port
             .parse::<u16>()
             .context(format!("invalid HTTP_PORT {http_port}"))?;

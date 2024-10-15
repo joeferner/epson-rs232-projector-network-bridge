@@ -39,7 +39,9 @@ use crate::{
 struct ApiDoc;
 
 pub async fn http_start_server(config: &Config, state: Arc<EpsonState>) -> Result<()> {
-    let socket_address: SocketAddr = format!("0.0.0.0:{}", config.http_port).parse().context("parse socket addr")?;
+    let socket_address: SocketAddr = format!("0.0.0.0:{}", config.http_port)
+        .parse()
+        .context("parse socket addr")?;
     let listener = TcpListener::bind(socket_address)
         .await
         .context(format!("binding to {socket_address}"))?;

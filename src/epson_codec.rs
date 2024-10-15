@@ -182,7 +182,7 @@ pub enum Power {
     Off,
 }
 
-impl From<PowerStatus> for Power{
+impl From<PowerStatus> for Power {
     fn from(value: PowerStatus) -> Self {
         match value {
             PowerStatus::StandbyModeNetworkOff => Power::Off,
