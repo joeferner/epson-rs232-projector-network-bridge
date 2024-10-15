@@ -5,6 +5,7 @@ use anyhow::{anyhow, Context, Result};
 use log::debug;
 
 pub struct Config {
+    pub http_port: u16,
     pub serial_port: String,
     pub read_timeout: Duration,
 }
@@ -15,6 +16,11 @@ impl Config {
         let log_level = log::LevelFilter::from_str(&log_level)?;
         init_logger(log_level)?;
 
+        let http_port= env::var("HTTP_PORT").unwrap_or("8080".to_string());
+        let http_port = http_port
+            .parse::<u16>()
+            .context(format!("invalid HTTP_PORT {http_port}"))?;
+
         let timeout = env::var("TIMEOUT").unwrap_or("3".to_string());
         let timeout = timeout
             .parse::<u64>()
@@ -23,6 +29,7 @@ impl Config {
         let serial_port = find_serial_port()?;
 
         Ok(Config {
+            http_port,
             serial_port,
             read_timeout: Duration::from_secs(timeout),
         })

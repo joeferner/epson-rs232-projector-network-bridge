@@ -38,9 +38,17 @@ function rust_setup {
   echo "rust setup complete"
 }
 
+function build {
+  echo "build..."
+  cargo build
+  sudo cp target/debug/unisonht-epson-network-rs232-projector /usr/sbin/unisonht-epson-network-rs232-projector
+  echo "build complete"
+}
+
 function service_setup {
   echo "setup service..."
   sudo cp scripts/unisonht-epson-projector.service /etc/systemd/system/
+  sudo systemctl daemon-reload
   sudo systemctl enable unisonht-epson-projector.service
   sudo systemctl start unisonht-epson-projector.service
   echo "service setup complete"
@@ -49,8 +57,12 @@ function service_setup {
 update
 dev_setup
 rust_setup
+build
 service_setup
 echo ""
 echo "Setup complete"
 echo ""
+echo "To enable readonly run ./scripts/read-only-fs.sh"
+echo ""
 echo "You may need to reboot to finish setup"
+echo ""

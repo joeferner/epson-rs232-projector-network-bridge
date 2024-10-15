@@ -23,6 +23,7 @@ async fn main() -> Result<()> {
     let epson = EpsonSerialPort::new(&config).await?;
     let state = Arc::new(EpsonState { epson });
 
-    http_start_server(state).await?;
+    http_start_server(&config, state).await?;
+
     Ok(())
 }

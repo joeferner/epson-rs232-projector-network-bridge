@@ -12,6 +12,7 @@ use utoipa_redoc::{Redoc, Servable as RedocServable};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
+    config::Config,
     routes::{self, get_status::get_status, post_power::post_power, post_source::post_source},
     state::EpsonState,
 };
@@ -37,8 +38,8 @@ use crate::{
 )]
 struct ApiDoc;
 
-pub async fn http_start_server(state: Arc<EpsonState>) -> Result<()> {
-    let socket_address: SocketAddr = "0.0.0.0:8080".parse().context("parse socket addr")?;
+pub async fn http_start_server(config: &Config, state: Arc<EpsonState>) -> Result<()> {
+    let socket_address: SocketAddr = format!("0.0.0.0:{}", config.http_port).parse().context("parse socket addr")?;
     let listener = TcpListener::bind(socket_address)
         .await
         .context(format!("binding to {socket_address}"))?;
