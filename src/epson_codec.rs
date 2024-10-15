@@ -2,8 +2,9 @@ use std::fmt::Write;
 
 use anyhow::{anyhow, Context, Result};
 use bytes::{Buf, BytesMut};
+use log::debug;
 use num_derive::{FromPrimitive, ToPrimitive};
-use num_traits::FromPrimitive;
+use num_traits::{FromPrimitive, ToPrimitive};
 use serde::{Deserialize, Serialize};
 use tokio_util::codec::{Decoder, Encoder};
 use utoipa::ToSchema;
@@ -15,12 +16,21 @@ impl EpsonCodec {
         Self {}
     }
 
-    fn parse_pwr_line(line: &mut BytesMut) -> Result<EpsonOutput> {
+    fn parse_power_status(line: &mut BytesMut) -> Result<EpsonOutput> {
         line.advance(b"PWR=".len());
         let code = EpsonCodec::parse_u8(line)?;
         match PowerStatus::from_u8(code) {
             Some(power_status) => Ok(EpsonOutput::PowerStatus(power_status)),
             None => Err(anyhow!("unknown power status: {code}")),
+        }
+    }
+
+    fn parse_source_status(line: &mut BytesMut) -> Result<EpsonOutput> {
+        line.advance(b"SOURCE=".len());
+        let code = EpsonCodec::parse_u8(line)?;
+        match Source::from_u8(code) {
+            Some(source_status) => Ok(EpsonOutput::SourceStatus(source_status)),
+            None => Err(anyhow!("unknown source status: {code}")),
         }
     }
 
@@ -33,9 +43,35 @@ impl EpsonCodec {
         }
     }
 
+    fn write_line(dst: &mut BytesMut, line: &str) -> Result<()> {
+        debug!("writing line: {line}");
+        dst.write_str(line)
+            .with_context(|| format!("failed to write {line}"))?;
+        dst.write_str("\r\n")
+            .with_context(|| format!("failed to write {line}; new lines"))
+    }
+
     fn write_query_power(dst: &mut BytesMut) -> Result<()> {
-        dst.write_str("PWR?\r\n")
-            .context("failed to write query power")
+        EpsonCodec::write_line(dst, "PWR?")
+    }
+
+    fn write_query_source(dst: &mut BytesMut) -> Result<()> {
+        EpsonCodec::write_line(dst, "SOURCE?")
+    }
+
+    fn write_set_power(dst: &mut BytesMut, power: Power) -> Result<()> {
+        match power {
+            Power::On => EpsonCodec::write_line(dst, "POWER ON"),
+            Power::Off => EpsonCodec::write_line(dst, "POWER OFF"),
+        }
+    }
+
+    fn write_set_source(dst: &mut BytesMut, source: Source) -> Result<()> {
+        let source_value = source
+            .to_u8()
+            .ok_or(anyhow!("invalid source: {source:?}"))?;
+        let cmd = format!("SOURCE {:02x}", source_value);
+        EpsonCodec::write_line(dst, &cmd)
     }
 }
 
@@ -53,8 +89,11 @@ impl Decoder for EpsonCodec {
             while line.starts_with(b":") {
                 line.advance(b":".len());
             }
+            debug!("received line {line:?}");
             if line.starts_with(b"PWR=") {
-                Ok(Some(EpsonCodec::parse_pwr_line(&mut line)?))
+                Ok(Some(EpsonCodec::parse_power_status(&mut line)?))
+            } else if line.starts_with(b"SOURCE=") {
+                Ok(Some(EpsonCodec::parse_source_status(&mut line)?))
             } else {
                 match std::str::from_utf8(&line) {
                     Ok(str) => Ok(Some(EpsonOutput::InvalidLine(str.to_string()))),
@@ -75,6 +114,9 @@ impl Encoder<EpsonInput> for EpsonCodec {
     fn encode(&mut self, item: EpsonInput, dst: &mut BytesMut) -> Result<(), Self::Error> {
         match item {
             EpsonInput::QueryPower => EpsonCodec::write_query_power(dst),
+            EpsonInput::QuerySource => EpsonCodec::write_query_source(dst),
+            EpsonInput::SetPower(power) => EpsonCodec::write_set_power(dst, power),
+            EpsonInput::SetSource(source) => EpsonCodec::write_set_source(dst, source),
         }
     }
 }
@@ -122,7 +164,9 @@ pub enum Source {
     Hdmi2 = 0xa0,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, ToSchema, FromPrimitive, ToPrimitive)]
+#[derive(
+    Serialize, Deserialize, Clone, Copy, Debug, ToSchema, FromPrimitive, ToPrimitive, PartialEq, Eq,
+)]
 #[serde(rename_all = "camelCase")]
 pub enum Power {
     On,
