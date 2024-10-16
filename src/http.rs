@@ -19,7 +19,7 @@ use crate::{
 
 #[derive(OpenApi)]
 #[openapi(
-    info(title = "unisonht-epson-network-rs232-projector"),
+    info(title = "epson-rs232-projector-network-bridge"),
     paths(
         routes::get_status::get_status,
         routes::post_source::post_source,

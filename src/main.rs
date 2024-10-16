@@ -18,7 +18,7 @@ mod state;
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::new()?;
-    info!("starting unisonht-epson-network-rs232-projector");
+    info!("starting epson-rs232-projector-network-bridge");
 
     let epson = EpsonSerialPort::new(&config).await?;
     let state = Arc::new(EpsonState { epson });

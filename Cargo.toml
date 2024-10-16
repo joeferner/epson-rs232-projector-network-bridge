@@ -1,5 +1,5 @@
 [package]
-name = "unisonht-epson-network-rs232-projector"
+name = "epson-rs232-projector-network-bridge"
 version = "0.1.0"
 edition = "2021"
 

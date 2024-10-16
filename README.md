@@ -29,12 +29,12 @@ terminal3> printf "PWR=00\r\n" > /dev/pts/2
         # copy id_rsa from host computer
         chmod 600 ~/.ssh/id_rsa
         ssh-keygen -p -f ~/.ssh/id_rsa # remove password
-        git clone git@github.com:joeferner/unisonht-epson-network-rs232-projector.git
-        ./unisonht-epson-network-rs232-projector/scripts/raspberry-pi-setup.sh
+        git clone git@github.com:joeferner/epson-rs232-projector-network-bridge.git
+        ./epson-rs232-projector-network-bridge/scripts/raspberry-pi-setup.sh
 
 # Raspberry Pi development
 
 1. Install "Remote Development" extension pack for VSCode.
 1. Connect VSCode via ssh (Ctrl+Shift+P -> Remote-SSH: Connect to Host...) `<username>@epson.local`
-1. Stop service `sudo systemctl stop unisonht-epson-projector`
+1. Stop service `sudo systemctl stop epson-projector-network-bridge`
 1. Run `RUST_BACKTRACE=1 LOG_LEVEL=debug cargo run`

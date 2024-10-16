@@ -1,5 +1,5 @@
 [Unit]
-Description=UnisonHT Epson Network RS232 Projector
+Description=Epson Network RS232 Projector
 After=network.target
 StartLimitIntervalSec=0
 
@@ -7,7 +7,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-ExecStart=/usr/sbin/unisonht-epson-network-rs232-projector
+ExecStart=/usr/sbin/epson-rs232-projector-network-bridge
 Environment="HTTP_PORT=80"
 Environment="LOG_LEVEL=debug"
 

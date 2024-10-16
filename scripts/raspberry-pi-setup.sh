@@ -41,22 +41,22 @@ function rust_setup {
 function build {
   echo "build..."
   cargo build
-  sudo cp target/debug/unisonht-epson-network-rs232-projector /usr/sbin/unisonht-epson-network-rs232-projector
+  sudo cp target/debug/epson-rs232-projector-network-bridge /usr/sbin/epson-rs232-projector-network-bridge
   echo "build complete"
 }
 
 function service_setup {
   echo "setup service..."
-  sudo cp scripts/unisonht-epson-projector.service /etc/systemd/system/
+  sudo cp scripts/epson-projector-network-bridge.service /etc/systemd/system/
   sudo systemctl daemon-reload
-  sudo systemctl enable unisonht-epson-projector.service
-  sudo systemctl start unisonht-epson-projector.service
+  sudo systemctl enable epson-projector-network-bridge.service
+  sudo systemctl start epson-projector-network-bridge.service
   echo "service setup complete"
 }
 
-update
-dev_setup
-rust_setup
+# update
+# dev_setup
+# rust_setup
 build
 service_setup
 echo ""
