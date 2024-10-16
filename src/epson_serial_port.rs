@@ -105,7 +105,7 @@ impl EpsonSerialPort {
             sleep(self.read_timeout).await;
         }
 
-        Err(anyhow!("failed to set source"))
+        Err(anyhow!("failed to set power"))
     }
 }
 

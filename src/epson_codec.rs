@@ -65,8 +65,8 @@ impl EpsonCodec {
 
     fn write_set_power(dst: &mut BytesMut, power: Power) -> Result<()> {
         match power {
-            Power::On => EpsonCodec::write_line(dst, "POWER ON"),
-            Power::Off => EpsonCodec::write_line(dst, "POWER OFF"),
+            Power::On => EpsonCodec::write_line(dst, "PWR ON"),
+            Power::Off => EpsonCodec::write_line(dst, "PWR OFF"),
         }
     }
 
