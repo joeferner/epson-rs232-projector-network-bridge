@@ -8,6 +8,8 @@ sudo raspi-config nonint enable_overlayfs
 echo "read only fs setup complete..."
 
 echo ""
+echo "To complete setup, reboot"
+echo ""
 echo "To disable readonly filesystem run the following then reboot"
 echo "   sudo raspi-config nonint disable_overlayfs" 
 echo ""
