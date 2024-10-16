@@ -54,9 +54,9 @@ function service_setup {
   echo "service setup complete"
 }
 
-# update
-# dev_setup
-# rust_setup
+update
+dev_setup
+rust_setup
 build
 service_setup
 echo ""
